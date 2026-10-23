@@ -6,16 +6,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   MapPin,
-  Calendar,
-  Activity,
-  Home,
-  Check,
   Building2,
   Sparkles,
-  Info,
   PlayCircle,
-  Clock,
   Award,
+  Check,
 } from 'lucide-react';
 import { Dog, AdopterLifestylePreferences, Shelter } from '../../types';
 import { calculateCompatibility } from '../matching/matchingEngine';
@@ -52,28 +47,28 @@ export const DogDetailModal: React.FC<DogDetailModalProps> = ({
 
   const matchResult = calculateCompatibility(adopterPreferences, dog);
 
-  const getScoreColor = (score: number) => {
-    if (matchResult.hardConstraintFailed) return 'text-[#BA5536] bg-[#FFF3F0] border-[#FCE8E2]';
-    if (score >= 85) return 'text-[#1B4332] bg-[#EBF7EE] border-[#D8F3DC]';
-    if (score >= 70) return 'text-[#2D6A4F] bg-[#FAF8F5] border-[#D5CEBF]';
-    return 'text-[#BA5536] bg-[#FFF3F0] border-[#FCE8E2]';
+  const getScoreBadgeClass = (score: number) => {
+    if (matchResult.hardConstraintFailed) return 'text-[#B85438] bg-[#FAF0EC] border-[#FCE8E2]';
+    if (score >= 85) return 'text-[#183B2B] bg-[#EDF4F0] border-[#D8F3DC]';
+    if (score >= 70) return 'text-[#24533E] bg-[#FAF7F2] border-[#EAE4DC]';
+    return 'text-[#B85438] bg-[#FAF0EC] border-[#FCE8E2]';
   };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-150">
-      <div className="bg-[#FAF8F5] rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl border border-[#E6DFD5] overflow-hidden">
-        {/* Sticky Header */}
-        <div className="bg-white border-b border-[#E6DFD5] px-6 py-4 flex items-center justify-between z-10">
+      <div className="bg-[#FAF7F2] rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl border border-[#EAE4DC] overflow-hidden">
+        {/* Modal Header */}
+        <div className="bg-white border-b border-[#EAE4DC] px-6 py-4 flex items-center justify-between z-10 flex-shrink-0">
           <div className="flex items-center space-x-3">
-            <h2 className="text-2xl font-bold font-serif-heading text-[#1B4332]">
+            <h2 className="text-xl sm:text-2xl font-bold font-serif-heading text-[#181F1A]">
               {dog.name}
             </h2>
             <span
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+              className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize ${
                 dog.status === 'available'
-                  ? 'bg-[#EBF7EE] text-[#1B4332]'
+                  ? 'bg-[#EDF4F0] text-[#183B2B]'
                   : dog.status === 'pending_adoption'
-                  ? 'bg-[#FFF3F0] text-[#BA5536]'
+                  ? 'bg-[#FAF0EC] text-[#B85438]'
                   : 'bg-gray-100 text-gray-700'
               }`}
             >
@@ -84,15 +79,15 @@ export const DogDetailModal: React.FC<DogDetailModalProps> = ({
           <div className="flex items-center space-x-2">
             <button
               onClick={() => onToggleSave(dog.id)}
-              className="p-2 rounded-xl border border-[#E6DFD5] text-[#BA5536] hover:bg-[#FFF3F0] transition flex items-center space-x-1.5 text-xs font-semibold"
+              className="p-2 rounded-xl border border-[#EAE4DC] text-[#B85438] hover:bg-[#FAF0EC] transition flex items-center space-x-1.5 text-xs font-semibold"
               title={isSaved ? 'Remove from saved' : 'Save to favorites'}
             >
-              <Heart className="w-4 h-4" fill={isSaved ? '#BA5536' : 'none'} />
+              <Heart className="w-4 h-4" fill={isSaved ? '#B85438' : 'none'} />
               <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-[#5C675F] hover:bg-[#F4EFEA] transition"
+              className="p-2 rounded-xl text-[#58625B] hover:bg-[#F2ECE4] transition"
               aria-label="Close dialog"
             >
               <X className="w-5 h-5" />
@@ -101,237 +96,155 @@ export const DogDetailModal: React.FC<DogDetailModalProps> = ({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Photos & Media Section */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-8 space-y-2">
-              <div className="relative rounded-2xl overflow-hidden aspect-4/3 bg-[#E6DFD5] shadow-inner group">
-                {showVideo && dog.videoUrl ? (
-                  <iframe
-                    src={dog.videoUrl}
-                    title={`${dog.name} introduction video`}
-                    className="w-full h-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
-                  <img
-                    src={dog.photos[activePhotoIndex] || dog.photos[0]}
-                    alt={`${dog.name} photo ${activePhotoIndex + 1}`}
-                    className="w-full h-full object-cover transition duration-300"
-                  />
-                )}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+          {/* Hero Photos & Media */}
+          <div className="space-y-3">
+            <div className="relative rounded-2xl overflow-hidden h-72 sm:h-84 bg-[#EAE4DC] shadow-inner group">
+              {showVideo && dog.videoUrl ? (
+                <iframe
+                  src={dog.videoUrl}
+                  title={`${dog.name} video`}
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <img
+                  src={dog.photos[activePhotoIndex] || dog.photos[0]}
+                  alt={`${dog.name} photo`}
+                  className="w-full h-full object-cover transition duration-300"
+                />
+              )}
 
-                {dog.videoUrl && (
-                  <button
-                    onClick={() => setShowVideo(!showVideo)}
-                    className="absolute bottom-4 right-4 bg-black/75 hover:bg-black text-white px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-sm transition flex items-center space-x-1.5 shadow-md"
-                  >
-                    <PlayCircle className="w-4 h-4 text-[#52B788]" />
-                    <span>{showVideo ? 'Show Photos' : 'Watch Video'}</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Photo Thumbnails */}
-              {dog.photos.length > 1 && !showVideo && (
-                <div className="flex space-x-2 pt-1">
-                  {dog.photos.map((photo, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setActivePhotoIndex(index)}
-                      className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition ${
-                        activePhotoIndex === index
-                          ? 'border-[#1B4332] scale-105 shadow-xs'
-                          : 'border-transparent opacity-70 hover:opacity-100'
-                      }`}
-                    >
-                      <img src={photo} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
+              {dog.videoUrl && (
+                <button
+                  onClick={() => setShowVideo(!showVideo)}
+                  className="absolute bottom-3 right-3 bg-black/75 hover:bg-black text-white px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-xs transition flex items-center space-x-1.5 shadow-md"
+                >
+                  <PlayCircle className="w-4 h-4 text-[#EDF4F0]" />
+                  <span>{showVideo ? 'Photos' : 'Video'}</span>
+                </button>
               )}
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="md:col-span-4 flex flex-col justify-between space-y-3">
-              <div className="bg-white p-4 rounded-2xl border border-[#E6DFD5] space-y-3">
-                <div className="border-b border-[#F4EFEA] pb-2">
-                  <span className="text-xs text-[#8E9991] uppercase tracking-wider font-semibold">
-                    Breed & Age
-                  </span>
-                  <div className="text-sm font-bold text-[#1C241E]">{dog.breed}</div>
-                  <div className="text-xs text-[#5C675F]">
-                    {dog.ageYears} years old ({dog.ageGroup})
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                    <span className="text-[#8E9991] block">Size</span>
-                    <span className="font-semibold text-[#1C241E] capitalize">{dog.size}</span>
-                  </div>
-                  <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                    <span className="text-[#8E9991] block">Gender</span>
-                    <span className="font-semibold text-[#1C241E] capitalize">{dog.gender}</span>
-                  </div>
-                  <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                    <span className="text-[#8E9991] block">Energy</span>
-                    <span className="font-semibold text-[#1C241E] capitalize">
-                      {dog.energyLevel.replace('_', ' ')}
-                    </span>
-                  </div>
-                  <div className="bg-[#FAF8F5] p-2 rounded-lg">
-                    <span className="text-[#8E9991] block">Daily Exercise</span>
-                    <span className="font-semibold text-[#1C241E]">
-                      {dog.minDailyExerciseHours}h / day
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-[#F4EFEA] flex justify-between items-center text-xs">
-                  <span className="text-[#8E9991]">Adoption Fee</span>
-                  <span className="font-bold text-[#1B4332] text-sm">${dog.adoptionFee}</span>
-                </div>
+            {/* Photo Thumbnails */}
+            {dog.photos.length > 1 && !showVideo && (
+              <div className="flex space-x-2">
+                {dog.photos.map((photo, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setActivePhotoIndex(index)}
+                    className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 transition ${
+                      activePhotoIndex === index
+                        ? 'border-[#183B2B] scale-105 shadow-xs'
+                        : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={photo} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
               </div>
+            )}
+          </div>
 
-              {/* Shelter Card */}
-              <div className="bg-[#EBF7EE] p-4 rounded-2xl border border-[#D8F3DC] text-xs space-y-1.5">
-                <div className="flex items-center space-x-1.5 text-[#1B4332] font-bold">
-                  <Building2 className="w-4 h-4 text-[#2D6A4F]" />
-                  <span>{dog.shelterName || shelter?.name || 'Rescue Partner'}</span>
-                </div>
-                <p className="text-[#2D6A4F] flex items-center space-x-1">
-                  <MapPin className="w-3 h-3 flex-shrink-0" />
-                  <span>{shelter?.address || dog.location}</span>
-                </p>
-                <p className="text-[#5C675F] text-[11px] pt-1">
-                  Visits & meet-and-greets are coordinated through PawPair with certified staff.
-                </p>
-              </div>
+          {/* Quick Stats Ribbon */}
+          <div className="bg-white p-4 rounded-2xl border border-[#EAE4DC] grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div>
+              <span className="text-[#8B958E] block text-[10px] uppercase font-semibold">Breed</span>
+              <span className="font-bold text-[#181F1A]">{dog.breed}</span>
+            </div>
+            <div>
+              <span className="text-[#8B958E] block text-[10px] uppercase font-semibold">Age & Gender</span>
+              <span className="font-bold text-[#181F1A] capitalize">
+                {dog.ageYears} yrs • {dog.gender}
+              </span>
+            </div>
+            <div>
+              <span className="text-[#8B958E] block text-[10px] uppercase font-semibold">Energy & Size</span>
+              <span className="font-bold text-[#181F1A] capitalize">
+                {dog.energyLevel.replace('_', ' ')} • {dog.size}
+              </span>
+            </div>
+            <div>
+              <span className="text-[#8B958E] block text-[10px] uppercase font-semibold">Adoption Fee</span>
+              <span className="font-bold text-[#183B2B]">${dog.adoptionFee}</span>
             </div>
           </div>
 
           {/* Explainable Compatibility Match Card */}
-          <div className="bg-white rounded-2xl p-5 border border-[#E6DFD5] shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#F4EFEA] gap-2">
+          <div className="bg-white rounded-2xl p-5 border border-[#EAE4DC] shadow-xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#F2ECE4] gap-2">
               <div className="flex items-center space-x-2">
-                <Sparkles className="w-5 h-5 text-[#2D6A4F]" />
-                <h3 className="font-bold font-serif-heading text-[#1B4332] text-lg">
+                <Sparkles className="w-4 h-4 text-[#357457]" />
+                <h3 className="font-bold font-serif-heading text-[#181F1A] text-base">
                   Explainable Lifestyle Compatibility
                 </h3>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getScoreColor(matchResult.score)}`}>
-                  {matchResult.score}% Compatibility — {matchResult.verdict}
-                </span>
-              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-bold border self-start sm:self-auto ${getScoreBadgeClass(matchResult.score)}`}>
+                {matchResult.score}% Compatibility — {matchResult.verdict}
+              </span>
             </div>
 
-            {/* Animal Welfare Hard Constraint Alert if applicable */}
+            {/* Hard Constraint Alert if applicable */}
             {matchResult.hardConstraintFailed && (
-              <div className="bg-[#FFF3F0] border border-[#FCE8E2] rounded-xl p-3.5 flex items-start space-x-3 text-xs text-[#9E4732]">
-                <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5 text-[#BA5536]" />
+              <div className="bg-[#FAF0EC] border border-[#FCE8E2] rounded-xl p-3 flex items-start space-x-2.5 text-xs text-[#963F28]">
+                <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#B85438]" />
                 <div>
-                  <h4 className="font-bold text-sm text-[#BA5536] mb-0.5">
-                    Critical Welfare & Safety Constraint Triggered
+                  <h4 className="font-bold text-xs text-[#B85438]">
+                    Animal Welfare Constraint Triggered
                   </h4>
-                  <p>{matchResult.hardConstraintReason}</p>
+                  <p className="mt-0.5">{matchResult.hardConstraintReason}</p>
                 </div>
               </div>
             )}
 
-            {/* Score Breakdown Bars */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-1">
-              <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#F4EFEA]">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[#5C675F] font-medium">Household</span>
-                  <span className="font-bold text-[#1B4332]">
-                    {matchResult.breakdown.householdCompatibilityScore}/25
-                  </span>
-                </div>
-                <div className="w-full bg-[#E6DFD5] h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#2D6A4F] h-full rounded-full"
-                    style={{ width: `${(matchResult.breakdown.householdCompatibilityScore / 25) * 100}%` }}
-                  />
+            {/* Score Breakdown (5 categories) */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1 text-xs">
+              <div className="bg-[#FAF7F2] p-2.5 rounded-xl border border-[#F2ECE4]">
+                <div className="text-[10px] text-[#58625B] font-medium">Household</div>
+                <div className="font-bold text-xs text-[#181F1A] mt-0.5">
+                  {matchResult.breakdown.householdCompatibilityScore}/25
                 </div>
               </div>
-
-              <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#F4EFEA]">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[#5C675F] font-medium">Activity Fit</span>
-                  <span className="font-bold text-[#1B4332]">
-                    {matchResult.breakdown.activityScore}/25
-                  </span>
-                </div>
-                <div className="w-full bg-[#E6DFD5] h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#2D6A4F] h-full rounded-full"
-                    style={{ width: `${(matchResult.breakdown.activityScore / 25) * 100}%` }}
-                  />
+              <div className="bg-[#FAF7F2] p-2.5 rounded-xl border border-[#F2ECE4]">
+                <div className="text-[10px] text-[#58625B] font-medium">Activity Fit</div>
+                <div className="font-bold text-xs text-[#181F1A] mt-0.5">
+                  {matchResult.breakdown.activityScore}/25
                 </div>
               </div>
-
-              <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#F4EFEA]">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[#5C675F] font-medium">Living Space</span>
-                  <span className="font-bold text-[#1B4332]">
-                    {matchResult.breakdown.environmentScore}/20
-                  </span>
-                </div>
-                <div className="w-full bg-[#E6DFD5] h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#2D6A4F] h-full rounded-full"
-                    style={{ width: `${(matchResult.breakdown.environmentScore / 20) * 100}%` }}
-                  />
+              <div className="bg-[#FAF7F2] p-2.5 rounded-xl border border-[#F2ECE4]">
+                <div className="text-[10px] text-[#58625B] font-medium">Living Space</div>
+                <div className="font-bold text-xs text-[#181F1A] mt-0.5">
+                  {matchResult.breakdown.environmentScore}/20
                 </div>
               </div>
-
-              <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#F4EFEA]">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[#5C675F] font-medium">Experience</span>
-                  <span className="font-bold text-[#1B4332]">
-                    {matchResult.breakdown.experienceScore}/15
-                  </span>
-                </div>
-                <div className="w-full bg-[#E6DFD5] h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#2D6A4F] h-full rounded-full"
-                    style={{ width: `${(matchResult.breakdown.experienceScore / 15) * 100}%` }}
-                  />
+              <div className="bg-[#FAF7F2] p-2.5 rounded-xl border border-[#F2ECE4]">
+                <div className="text-[10px] text-[#58625B] font-medium">Experience</div>
+                <div className="font-bold text-xs text-[#181F1A] mt-0.5">
+                  {matchResult.breakdown.experienceScore}/15
                 </div>
               </div>
-
-              <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#F4EFEA]">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[#5C675F] font-medium">Schedule</span>
-                  <span className="font-bold text-[#1B4332]">
-                    {matchResult.breakdown.scheduleScore}/15
-                  </span>
-                </div>
-                <div className="w-full bg-[#E6DFD5] h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#2D6A4F] h-full rounded-full"
-                    style={{ width: `${(matchResult.breakdown.scheduleScore / 15) * 100}%` }}
-                  />
+              <div className="bg-[#FAF7F2] p-2.5 rounded-xl border border-[#F2ECE4]">
+                <div className="text-[10px] text-[#58625B] font-medium">Schedule</div>
+                <div className="font-bold text-xs text-[#181F1A] mt-0.5">
+                  {matchResult.breakdown.scheduleScore}/15
                 </div>
               </div>
             </div>
 
-            {/* Positive Factors & Challenges */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-1">
+            {/* Highlights & Challenges */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-xs">
               {matchResult.positiveHighlights.length > 0 && (
-                <div className="bg-[#EBF7EE]/60 p-3.5 rounded-xl space-y-2 border border-[#D8F3DC]">
-                  <span className="font-bold text-[#1B4332] flex items-center space-x-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#2D6A4F]" />
+                <div className="bg-[#EDF4F0]/70 p-3 rounded-xl border border-[#D8F3DC] space-y-1">
+                  <span className="font-bold text-[#183B2B] flex items-center space-x-1.5 text-[11px]">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#357457]" />
                     <span>Key Synergy Factors</span>
                   </span>
-                  <ul className="space-y-1 text-[#2D6A4F]">
-                    {matchResult.positiveHighlights.map((highlight, idx) => (
-                      <li key={idx} className="flex items-start space-x-1.5">
-                        <span className="text-[#52B788]">•</span>
-                        <span>{highlight}</span>
+                  <ul className="space-y-1 text-[#24533E] text-[11px]">
+                    {matchResult.positiveHighlights.map((h, i) => (
+                      <li key={i} className="flex items-start space-x-1">
+                        <span>•</span>
+                        <span>{h}</span>
                       </li>
                     ))}
                   </ul>
@@ -339,16 +252,16 @@ export const DogDetailModal: React.FC<DogDetailModalProps> = ({
               )}
 
               {matchResult.potentialChallenges.length > 0 && (
-                <div className="bg-[#FFF3F0]/60 p-3.5 rounded-xl space-y-2 border border-[#FCE8E2]">
-                  <span className="font-bold text-[#BA5536] flex items-center space-x-1.5">
-                    <AlertTriangle className="w-4 h-4 text-[#BA5536]" />
-                    <span>Lifestyle Considerations & Challenges</span>
+                <div className="bg-[#FAF0EC]/70 p-3 rounded-xl border border-[#FCE8E2] space-y-1">
+                  <span className="font-bold text-[#B85438] flex items-center space-x-1.5 text-[11px]">
+                    <AlertTriangle className="w-3.5 h-3.5 text-[#B85438]" />
+                    <span>Care Considerations</span>
                   </span>
-                  <ul className="space-y-1 text-[#9E4732]">
-                    {matchResult.potentialChallenges.map((challenge, idx) => (
-                      <li key={idx} className="flex items-start space-x-1.5">
-                        <span className="text-[#BA5536]">•</span>
-                        <span>{challenge}</span>
+                  <ul className="space-y-1 text-[#963F28] text-[11px]">
+                    {matchResult.potentialChallenges.map((c, i) => (
+                      <li key={i} className="flex items-start space-x-1">
+                        <span>•</span>
+                        <span>{c}</span>
                       </li>
                     ))}
                   </ul>
@@ -356,40 +269,38 @@ export const DogDetailModal: React.FC<DogDetailModalProps> = ({
               )}
             </div>
 
-            <div className="flex items-center justify-between text-xs text-[#5C675F] pt-2">
-              <span className="italic">
-                * Scored deterministically based on your lifestyle profile answers.
-              </span>
+            <div className="pt-1 flex items-center justify-between text-[11px] text-[#58625B]">
+              <span className="italic">* Deterministic lifestyle match based on your questionnaire.</span>
               <button
                 onClick={() => {
                   onClose();
                   onNavigateToMatching();
                 }}
-                className="text-[#1B4332] font-semibold underline hover:text-[#2D6A4F]"
+                className="text-[#183B2B] font-semibold underline hover:text-[#24533E]"
               >
-                Edit Lifestyle Questionnaire →
+                Edit Questionnaire →
               </button>
             </div>
           </div>
 
-          {/* Backstory & Personality */}
-          <div className="bg-white rounded-2xl p-5 border border-[#E6DFD5] shadow-xs space-y-3">
-            <h3 className="font-bold font-serif-heading text-[#1B4332] text-lg">
+          {/* Story & Personality */}
+          <div className="bg-white rounded-2xl p-5 border border-[#EAE4DC] shadow-xs space-y-2.5">
+            <h3 className="font-bold font-serif-heading text-[#181F1A] text-base">
               {dog.name}'s Story & Personality
             </h3>
-            <p className="text-sm text-[#2D372E] leading-relaxed whitespace-pre-line">
+            <p className="text-xs sm:text-sm text-[#2D372E] leading-relaxed whitespace-pre-line">
               {dog.backstory}
             </p>
 
             <div className="pt-2">
-              <span className="text-xs font-semibold text-[#8E9991] uppercase tracking-wider block mb-2">
-                Personality Traits
+              <span className="text-[10px] font-semibold text-[#8B958E] uppercase tracking-wider block mb-1.5">
+                Temperament Traits
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {dog.temperament.map((trait, idx) => (
                   <span
                     key={idx}
-                    className="px-3 py-1 rounded-full bg-[#F4EFEA] text-[#1B4332] text-xs font-medium"
+                    className="px-2.5 py-1 rounded-full bg-[#FAF7F2] border border-[#EAE4DC] text-[#181F1A] text-xs font-medium"
                   >
                     {trait}
                   </span>
@@ -398,105 +309,101 @@ export const DogDetailModal: React.FC<DogDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Social Compatibility & Medical Verification */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Household Social Fit */}
-            <div className="bg-white rounded-2xl p-5 border border-[#E6DFD5] shadow-xs space-y-3">
-              <h3 className="font-bold font-serif-heading text-[#1B4332] text-base">
+          {/* Social Compatibility & Veterinary Care */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            {/* Social Fit */}
+            <div className="bg-white rounded-2xl p-4 border border-[#EAE4DC] shadow-xs space-y-2">
+              <h3 className="font-bold font-serif-heading text-[#181F1A] text-sm">
                 Social Compatibility
               </h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-[#FAF8F5]">
-                  <span className="text-[#2D372E]">Good with children</span>
-                  <span
-                    className={`font-semibold px-2 py-0.5 rounded-full ${
-                      dog.goodWith.children
-                        ? 'bg-[#EBF7EE] text-[#1B4332]'
-                        : 'bg-[#FFF3F0] text-[#BA5536]'
-                    }`}
-                  >
-                    {dog.goodWith.children ? 'Yes, gentle' : 'Adults only'}
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center py-1 border-b border-[#F2ECE4]">
+                  <span className="text-[#58625B]">Children</span>
+                  <span className="font-semibold text-[#181F1A]">
+                    {dog.goodWith.children ? 'Gentle & Patient' : 'Adults Only'}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-[#FAF8F5]">
-                  <span className="text-[#2D372E]">Good with cats</span>
-                  <span
-                    className={`font-semibold px-2 py-0.5 rounded-full ${
-                      dog.goodWith.cats
-                        ? 'bg-[#EBF7EE] text-[#1B4332]'
-                        : 'bg-[#FFF3F0] text-[#BA5536]'
-                    }`}
-                  >
-                    {dog.goodWith.cats ? 'Yes, coexists safely' : 'No cats (High prey drive)'}
+                <div className="flex justify-between items-center py-1 border-b border-[#F2ECE4]">
+                  <span className="text-[#58625B]">Resident Cats</span>
+                  <span className="font-semibold text-[#181F1A]">
+                    {dog.goodWith.cats ? 'Safe Coexistence' : 'No Cats (Prey Drive)'}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-[#FAF8F5]">
-                  <span className="text-[#2D372E]">Good with other dogs</span>
-                  <span
-                    className={`font-semibold px-2 py-0.5 rounded-full ${
-                      dog.goodWith.otherDogs
-                        ? 'bg-[#EBF7EE] text-[#1B4332]'
-                        : 'bg-[#FFF3F0] text-[#BA5536]'
-                    }`}
-                  >
-                    {dog.goodWith.otherDogs ? 'Yes, dog-social' : 'Only dog preferred'}
+                <div className="flex justify-between items-center py-1 border-b border-[#F2ECE4]">
+                  <span className="text-[#58625B]">Other Dogs</span>
+                  <span className="font-semibold text-[#181F1A]">
+                    {dog.goodWith.otherDogs ? 'Dog-Social' : 'Single Dog Preferred'}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-[#FAF8F5]">
-                  <span className="text-[#2D372E]">Housing requirement</span>
-                  <span className="font-semibold text-[#1C241E] capitalize">
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-[#58625B]">Housing Space</span>
+                  <span className="font-semibold text-[#181F1A] capitalize">
                     {dog.spaceRequired.replace(/_/g, ' ')}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Medical & Veterinary Info */}
-            <div className="bg-white rounded-2xl p-5 border border-[#E6DFD5] shadow-xs space-y-3">
-              <h3 className="font-bold font-serif-heading text-[#1B4332] text-base">
-                Veterinary & Health Status
+            {/* Health Verification */}
+            <div className="bg-white rounded-2xl p-4 border border-[#EAE4DC] shadow-xs space-y-2">
+              <h3 className="font-bold font-serif-heading text-[#181F1A] text-sm">
+                Veterinary Verification
               </h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center space-x-2 text-[#1B4332]">
-                  <Check className="w-4 h-4 text-[#52B788]" />
-                  <span>Vaccinations up to date</span>
+              <div className="space-y-1.5 text-[#181F1A]">
+                <div className="flex items-center space-x-2 py-0.5">
+                  <Check className="w-3.5 h-3.5 text-[#357457]" />
+                  <span>Vaccinations Up to Date</span>
                 </div>
-                <div className="flex items-center space-x-2 text-[#1B4332]">
-                  <Check className="w-4 h-4 text-[#52B788]" />
+                <div className="flex items-center space-x-2 py-0.5">
+                  <Check className="w-3.5 h-3.5 text-[#357457]" />
                   <span>Spayed / Neutered</span>
                 </div>
-                <div className="flex items-center space-x-2 text-[#1B4332]">
-                  <Check className="w-4 h-4 text-[#52B788]" />
+                <div className="flex items-center space-x-2 py-0.5">
+                  <Check className="w-3.5 h-3.5 text-[#357457]" />
                   <span>Microchipped</span>
                 </div>
-
                 {dog.medicalInfo.specialCare && (
-                  <div className="bg-[#FAF8F5] p-2.5 rounded-lg border border-[#E6DFD5] text-[#5C675F] mt-2">
-                    <span className="font-semibold text-[#1C241E] block mb-0.5">Special Care:</span>
-                    <span>{dog.medicalInfo.specialCare}</span>
-                  </div>
+                  <p className="text-[11px] text-[#58625B] pt-1 border-t border-[#F2ECE4]">
+                    <strong>Note:</strong> {dog.medicalInfo.specialCare}
+                  </p>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* Shelter Card */}
+          <div className="bg-[#EDF4F0]/60 p-4 rounded-2xl border border-[#D8F3DC] text-xs flex items-center justify-between">
+            <div className="flex items-center space-x-2.5">
+              <Building2 className="w-5 h-5 text-[#357457] flex-shrink-0" />
+              <div>
+                <span className="font-bold text-[#183B2B] block">
+                  {dog.shelterName || shelter?.name || 'Rescue Partner'}
+                </span>
+                <span className="text-[#58625B] text-[11px] flex items-center space-x-1 mt-0.5">
+                  <MapPin className="w-3 h-3" />
+                  <span>{shelter?.address || dog.location}</span>
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Sticky Action Footer */}
-        <div className="bg-white border-t border-[#E6DFD5] px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center space-x-2 text-xs text-[#5C675F]">
-            <Award className="w-4 h-4 text-[#2D6A4F]" />
-            <span>Shelter placement includes post-adoption behavioral support.</span>
+        {/* Modal Sticky Footer */}
+        <div className="bg-white border-t border-[#EAE4DC] px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 flex-shrink-0">
+          <div className="flex items-center space-x-2 text-[11px] text-[#58625B]">
+            <Award className="w-3.5 h-3.5 text-[#357457]" />
+            <span>Adoptions include behavioral transition guidance and medical records.</span>
           </div>
 
-          <div className="flex items-center space-x-3 w-full sm:w-auto">
+          <div className="flex items-center space-x-2.5 w-full sm:w-auto">
             <button
               onClick={() => {
                 onClose();
                 onNavigateToVisits();
               }}
-              className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-[#D5CEBF] text-xs font-semibold text-[#1B4332] hover:bg-[#FAF8F5] transition"
+              className="flex-1 sm:flex-initial px-4 py-2 rounded-xl border border-[#EAE4DC] text-xs font-semibold text-[#181F1A] hover:bg-[#FAF7F2] transition"
             >
-              Group Shelter Visits
+              Shelter Visits
             </button>
             <button
               disabled={dog.status !== 'available'}
@@ -504,9 +411,9 @@ export const DogDetailModal: React.FC<DogDetailModalProps> = ({
                 onClose();
                 onApply(dog);
               }}
-              className={`flex-1 sm:flex-initial px-6 py-2.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center justify-center space-x-2 ${
+              className={`flex-1 sm:flex-initial px-5 py-2 rounded-xl text-xs font-bold transition shadow-xs flex items-center justify-center space-x-1.5 ${
                 dog.status === 'available'
-                  ? 'bg-[#1B4332] hover:bg-[#2D6A4F] text-white'
+                  ? 'bg-[#183B2B] hover:bg-[#24533E] text-white'
                   : 'bg-gray-200 text-gray-500 cursor-not-allowed'
               }`}
             >

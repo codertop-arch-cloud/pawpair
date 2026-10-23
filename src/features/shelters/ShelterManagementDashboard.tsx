@@ -9,13 +9,10 @@ import {
   Clock,
   AlertCircle,
   XCircle,
-  Edit3,
-  Trash2,
-  Eye,
   ShieldCheck,
   Check,
   X,
-  Search,
+  MapPin,
 } from 'lucide-react';
 import {
   Dog,
@@ -51,7 +48,6 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
 }) => {
   const [activeTab, setActiveTab] = useState<'listings' | 'applications' | 'visits'>('listings');
   const [showAddDogModal, setShowAddDogModal] = useState(false);
-  const [editingDog, setEditingDog] = useState<Dog | null>(null);
   const [statusUpdateAppId, setStatusUpdateAppId] = useState<string | null>(null);
   const [statusNote, setStatusNote] = useState('');
   const [targetStatus, setTargetStatus] = useState<ApplicationStatus>('under_review');
@@ -86,7 +82,6 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
   const [visitCapacity, setVisitCapacity] = useState(8);
   const [visitError, setVisitError] = useState<string | null>(null);
 
-  // Filter applications by shelter
   const currentShelterId = currentUser.shelterId || 'shelter-green-paws';
   const shelter = shelters.find((s) => s.id === currentShelterId) || shelters[0];
 
@@ -94,18 +89,17 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
   const shelterApplications = applications.filter((a) => a.shelterId === currentShelterId);
   const shelterVisits = visits.filter((v) => v.shelterId === currentShelterId);
 
-  // Stats
+  // Metrics
   const activeListingsCount = shelterDogs.filter((d) => d.status === 'available').length;
   const pendingAppsCount = shelterApplications.filter(
     (a) => a.status === 'submitted' || a.status === 'under_review'
   ).length;
   const approvedAppsCount = shelterApplications.filter((a) => a.status === 'approved').length;
 
-  // Handle Dog Creation
   const handleCreateDog = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDogName.trim() || !newDogBreed.trim() || !newDogBackstory.trim()) {
-      alert('Please fill out all required dog profile fields.');
+      alert('Please fill out all required fields.');
       return;
     }
 
@@ -123,7 +117,7 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
       size: newDogSize,
       gender: newDogGender,
       energyLevel: newDogEnergy,
-      temperament: ['Friendly', 'Gentle', 'Loyal'],
+      temperament: ['Gentle', 'Loyal', 'Friendly'],
       location: `${shelter.city}, ${shelter.state}`,
       shelterId: shelter.id,
       shelterName: shelter.name,
@@ -150,19 +144,16 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
 
     setShowAddDogModal(false);
     onRefreshData();
-    // Reset form
     setNewDogName('');
     setNewDogBreed('');
     setNewDogBackstory('');
   };
 
-  // Handle Dog Status Change
   const handleUpdateDogStatus = (dogId: string, status: DogStatus) => {
     dataStore.updateDog(dogId, { status });
     onRefreshData();
   };
 
-  // Handle Application Status Update
   const handleApplicationStatusSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!statusUpdateAppId) return;
@@ -179,7 +170,6 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
     onRefreshData();
   };
 
-  // Handle Visit Creation
   const handleCreateVisit = (e: React.FormEvent) => {
     e.preventDefault();
     setVisitError(null);
@@ -205,40 +195,40 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* Shelter Header & Role Indicator */}
-      <div className="bg-white rounded-3xl p-6 border border-[#E6DFD5] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center space-x-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#EBF7EE] text-[#1B4332] flex items-center justify-center border border-[#D8F3DC] flex-shrink-0">
-            <Building2 className="w-7 h-7 text-[#2D6A4F]" />
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-6">
+      {/* Header Card */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#EAE4DC] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-[#EDF4F0] text-[#183B2B] flex items-center justify-center border border-[#D8F3DC] flex-shrink-0">
+            <Building2 className="w-6 h-6 text-[#357457]" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl sm:text-3xl font-bold font-serif-heading text-[#1B4332]">
+              <h1 className="text-xl sm:text-2xl font-bold font-serif-heading text-[#181F1A]">
                 {shelter.name}
               </h1>
-              <span className="bg-[#EBF7EE] text-[#1B4332] text-xs font-semibold px-2.5 py-0.5 rounded-full border border-[#D8F3DC]">
-                Staff Portal
+              <span className="bg-[#EDF4F0] text-[#183B2B] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#D8F3DC]">
+                Portal
               </span>
             </div>
-            <p className="text-xs text-[#5C675F] mt-0.5">
-              Logged in as <strong>{currentUser.fullName}</strong> • {shelter.address}, {shelter.city}, {shelter.state}
+            <p className="text-xs text-[#58625B] mt-0.5">
+              Director: <strong>{shelter.directorName}</strong> • {shelter.address}, {shelter.city}, {shelter.state}
             </p>
           </div>
         </div>
 
-        {/* Demo Role Switcher Reminder if current user is an adopter */}
+        {/* Demo Switcher Callout if viewing as adopter */}
         {currentUser.role !== 'shelter_staff' && (
-          <div className="bg-[#FFF3F0] border border-[#FCE8E2] p-3 rounded-xl text-xs flex items-center justify-between gap-3 w-full md:w-auto">
-            <span className="text-[#9E4732]">
-              You are currently viewing as Adopter ({currentUser.fullName}). Switch to Elena Vance to test staff permissions.
+          <div className="bg-[#FAF0EC] border border-[#FCE8E2] px-3 py-2 rounded-xl text-xs flex items-center justify-between gap-3 w-full md:w-auto">
+            <span className="text-[#963F28]">
+              Logged in as Adopter ({currentUser.fullName}). Switch to Elena Vance to test staff workflows.
             </span>
             <button
               onClick={() => {
                 const staffUser = availableUsers.find((u) => u.role === 'shelter_staff');
                 if (staffUser) onSwitchUser(staffUser);
               }}
-              className="px-3 py-1 bg-[#BA5536] text-white rounded-lg font-bold text-xs hover:bg-[#9E4732] transition flex-shrink-0"
+              className="px-3 py-1 bg-[#B85438] text-white rounded-lg font-bold text-xs hover:bg-[#963F28] transition flex-shrink-0"
             >
               Switch to Elena (Staff)
             </button>
@@ -246,87 +236,87 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
         )}
       </div>
 
-      {/* Overview Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-[#E6DFD5] shadow-xs">
-          <span className="text-xs text-[#8E9991] uppercase tracking-wider font-semibold block mb-1">
-            Active Available Dogs
+      {/* Metrics Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="bg-white p-4 rounded-2xl border border-[#EAE4DC] shadow-xs">
+          <span className="text-[10px] text-[#8B958E] uppercase tracking-wider font-bold block mb-0.5">
+            Available Dogs
           </span>
-          <div className="text-3xl font-bold font-serif-heading text-[#1B4332]">
+          <div className="text-2xl font-bold font-serif-heading text-[#183B2B]">
             {activeListingsCount}
           </div>
-          <span className="text-xs text-[#5C675F] mt-1 block">
-            {shelterDogs.length} total profiles managed
+          <span className="text-[11px] text-[#58625B] mt-0.5 block">
+            {shelterDogs.length} total profiles
           </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#E6DFD5] shadow-xs">
-          <span className="text-xs text-[#8E9991] uppercase tracking-wider font-semibold block mb-1">
-            Applications in Queue
+        <div className="bg-white p-4 rounded-2xl border border-[#EAE4DC] shadow-xs">
+          <span className="text-[10px] text-[#8B958E] uppercase tracking-wider font-bold block mb-0.5">
+            Pending Applications
           </span>
-          <div className="text-3xl font-bold font-serif-heading text-[#BA5536]">
+          <div className="text-2xl font-bold font-serif-heading text-[#B85438]">
             {pendingAppsCount}
           </div>
-          <span className="text-xs text-[#5C675F] mt-1 block">Awaiting review or references</span>
+          <span className="text-[11px] text-[#58625B] mt-0.5 block">In review queue</span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#E6DFD5] shadow-xs">
-          <span className="text-xs text-[#8E9991] uppercase tracking-wider font-semibold block mb-1">
-            Approved Placements
+        <div className="bg-white p-4 rounded-2xl border border-[#EAE4DC] shadow-xs">
+          <span className="text-[10px] text-[#8B958E] uppercase tracking-wider font-bold block mb-0.5">
+            Approved Meets
           </span>
-          <div className="text-3xl font-bold font-serif-heading text-[#2D6A4F]">
+          <div className="text-2xl font-bold font-serif-heading text-[#24533E]">
             {approvedAppsCount}
           </div>
-          <span className="text-xs text-[#5C675F] mt-1 block">Meet-and-greets scheduled</span>
+          <span className="text-[11px] text-[#58625B] mt-0.5 block">Adoptions in progress</span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#E6DFD5] shadow-xs">
-          <span className="text-xs text-[#8E9991] uppercase tracking-wider font-semibold block mb-1">
-            Upcoming Group Visits
+        <div className="bg-white p-4 rounded-2xl border border-[#EAE4DC] shadow-xs">
+          <span className="text-[10px] text-[#8B958E] uppercase tracking-wider font-bold block mb-0.5">
+            Group Visits
           </span>
-          <div className="text-3xl font-bold font-serif-heading text-[#1C241E]">
+          <div className="text-2xl font-bold font-serif-heading text-[#181F1A]">
             {shelterVisits.length}
           </div>
-          <span className="text-xs text-[#5C675F] mt-1 block">Community walk & foster days</span>
+          <span className="text-[11px] text-[#58625B] mt-0.5 block">Scheduled sessions</span>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-[#E6DFD5] space-x-8">
+      <div className="flex border-b border-[#EAE4DC] space-x-6">
         <button
           onClick={() => setActiveTab('listings')}
-          className={`pb-3 text-sm font-bold flex items-center space-x-2 border-b-2 transition ${
+          className={`pb-2.5 text-xs font-bold border-b-2 transition ${
             activeTab === 'listings'
-              ? 'border-[#1B4332] text-[#1B4332]'
-              : 'border-transparent text-[#5C675F] hover:text-[#1B4332]'
+              ? 'border-[#183B2B] text-[#183B2B]'
+              : 'border-transparent text-[#58625B] hover:text-[#181F1A]'
           }`}
         >
-          <span>Dog Listings ({shelterDogs.length})</span>
+          Dog Listings ({shelterDogs.length})
         </button>
         <button
           onClick={() => setActiveTab('applications')}
-          className={`pb-3 text-sm font-bold flex items-center space-x-2 border-b-2 transition ${
+          className={`pb-2.5 text-xs font-bold border-b-2 transition flex items-center space-x-1.5 ${
             activeTab === 'applications'
-              ? 'border-[#1B4332] text-[#1B4332]'
-              : 'border-transparent text-[#5C675F] hover:text-[#1B4332]'
+              ? 'border-[#183B2B] text-[#183B2B]'
+              : 'border-transparent text-[#58625B] hover:text-[#181F1A]'
           }`}
         >
-          <span>Adoption Applications ({shelterApplications.length})</span>
+          <span>Applications ({shelterApplications.length})</span>
           {pendingAppsCount > 0 && (
-            <span className="text-[10px] bg-[#BA5536] text-white px-2 py-0.5 rounded-full">
-              {pendingAppsCount} new
+            <span className="text-[10px] bg-[#B85438] text-white px-1.5 py-0.2 rounded-full font-bold">
+              {pendingAppsCount}
             </span>
           )}
         </button>
         <button
           onClick={() => setActiveTab('visits')}
-          className={`pb-3 text-sm font-bold flex items-center space-x-2 border-b-2 transition ${
+          className={`pb-2.5 text-xs font-bold border-b-2 transition ${
             activeTab === 'visits'
-              ? 'border-[#1B4332] text-[#1B4332]'
-              : 'border-transparent text-[#5C675F] hover:text-[#1B4332]'
+              ? 'border-[#183B2B] text-[#183B2B]'
+              : 'border-transparent text-[#58625B] hover:text-[#181F1A]'
           }`}
         >
-          <span>Shelter Group Visits ({shelterVisits.length})</span>
+          Group Visits ({shelterVisits.length})
         </button>
       </div>
 
@@ -334,63 +324,51 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
       {activeTab === 'listings' && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold font-serif-heading text-[#1B4332]">
-              Rescue Dog Profiles Managed by {shelter.name}
+            <h2 className="text-base font-bold font-serif-heading text-[#181F1A]">
+              Managed Dog Profiles
             </h2>
             <button
               onClick={() => setShowAddDogModal(true)}
-              className="px-4 py-2 bg-[#1B4332] hover:bg-[#2D6A4F] text-white rounded-xl text-xs font-bold transition flex items-center space-x-2 shadow-xs"
+              className="px-3.5 py-1.5 bg-[#183B2B] hover:bg-[#24533E] text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-xs"
             >
-              <PlusCircle className="w-4 h-4" />
-              <span>Add New Dog Listing</span>
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>Add Dog Profile</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {shelterDogs.map((dog) => (
               <div
                 key={dog.id}
-                className="bg-white rounded-2xl border border-[#E6DFD5] overflow-hidden shadow-xs p-4 flex flex-col justify-between space-y-4"
+                className="bg-white rounded-2xl border border-[#EAE4DC] p-4 shadow-xs flex flex-col justify-between space-y-3"
               >
                 <div className="flex space-x-3">
                   <img
                     src={dog.photos[0]}
                     alt={dog.name}
-                    className="w-20 h-20 rounded-xl object-cover flex-shrink-0"
+                    className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-base font-serif-heading text-[#1C241E]">
+                    <div className="flex items-baseline justify-between">
+                      <h3 className="font-bold text-sm font-serif-heading text-[#181F1A] truncate">
                         {dog.name}
                       </h3>
-                      <span className="text-xs text-[#8E9991] font-semibold">${dog.adoptionFee}</span>
+                      <span className="text-xs font-semibold text-[#183B2B]">${dog.adoptionFee}</span>
                     </div>
-                    <p className="text-xs text-[#5C675F] truncate">{dog.breed}</p>
-                    <p className="text-xs text-[#8E9991]">
+                    <p className="text-xs text-[#58625B] truncate">{dog.breed}</p>
+                    <p className="text-[11px] text-[#8B958E]">
                       {dog.ageYears} yrs • {dog.size} • {dog.energyLevel.replace('_', ' ')}
                     </p>
-                    <div className="flex gap-1 mt-1 text-[10px]">
-                      {dog.goodWith.cats && (
-                        <span className="bg-[#EBF7EE] text-[#1B4332] px-1.5 py-0.5 rounded">
-                          Cat-safe
-                        </span>
-                      )}
-                      {dog.goodWith.children && (
-                        <span className="bg-[#EBF7EE] text-[#1B4332] px-1.5 py-0.5 rounded">
-                          Kid-safe
-                        </span>
-                      )}
-                    </div>
                   </div>
                 </div>
 
-                {/* Status Switcher */}
-                <div className="pt-2 border-t border-[#F4EFEA] flex items-center justify-between text-xs">
-                  <span className="text-[#5C675F] font-medium">Status:</span>
+                {/* Status Dropdown */}
+                <div className="pt-2 border-t border-[#F2ECE4] flex items-center justify-between text-xs">
+                  <span className="text-[#58625B] text-[11px]">Availability:</span>
                   <select
                     value={dog.status}
                     onChange={(e) => handleUpdateDogStatus(dog.id, e.target.value as DogStatus)}
-                    className="bg-[#FAF8F5] border border-[#E6DFD5] rounded-lg px-2.5 py-1 text-xs font-semibold text-[#1B4332] focus:outline-none focus:border-[#1B4332]"
+                    className="bg-[#FAF7F2] border border-[#EAE4DC] rounded-lg px-2 py-0.5 text-xs font-semibold text-[#183B2B] focus:outline-none focus:border-[#183B2B]"
                   >
                     <option value="available">Available</option>
                     <option value="pending_adoption">Pending Adoption</option>
@@ -407,44 +385,40 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
       {/* TAB 2: ADOPTION APPLICATIONS */}
       {activeTab === 'applications' && (
         <div className="space-y-4">
-          <h2 className="text-lg font-bold font-serif-heading text-[#1B4332]">
-            Adoption Applications Queue
+          <h2 className="text-base font-bold font-serif-heading text-[#181F1A]">
+            Applications Queue
           </h2>
 
           {shelterApplications.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-2xl border border-[#E6DFD5]">
-              <p className="text-sm font-semibold text-[#1C241E]">No applications submitted yet</p>
-              <p className="text-xs text-[#5C675F]">
-                New adoption requests for {shelter.name}'s dogs will appear here.
-              </p>
+            <div className="text-center py-12 bg-white rounded-2xl border border-[#EAE4DC]">
+              <p className="text-xs text-[#58625B]">No applications currently in queue.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {shelterApplications.map((app) => (
                 <div
                   key={app.id}
-                  className="bg-white rounded-2xl border border-[#E6DFD5] p-5 shadow-xs space-y-4"
+                  className="bg-white rounded-2xl border border-[#EAE4DC] p-4 sm:p-5 shadow-xs space-y-3"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#F4EFEA] gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-[#F2ECE4] gap-2">
                     <div className="flex items-center space-x-3">
                       <img
                         src={app.dogPhoto}
                         alt={app.dogName}
-                        className="w-12 h-12 rounded-xl object-cover"
+                        className="w-10 h-10 rounded-xl object-cover"
                       />
                       <div>
-                        <h3 className="font-bold text-base font-serif-heading text-[#1C241E]">
+                        <h3 className="font-bold text-sm font-serif-heading text-[#181F1A]">
                           Application for {app.dogName}
                         </h3>
-                        <p className="text-xs text-[#5C675F]">
-                          Applicant: <strong>{app.applicantName}</strong> ({app.applicantEmail} •{' '}
-                          {app.applicantPhone})
+                        <p className="text-xs text-[#58625B]">
+                          Applicant: <strong className="text-[#181F1A]">{app.applicantName}</strong> ({app.applicantPhone})
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs font-bold uppercase px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#E6DFD5] text-[#1B4332]">
+                      <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#FAF7F2] border border-[#EAE4DC] text-[#181F1A]">
                         {app.status.replace(/_/g, ' ')}
                       </span>
                       <button
@@ -452,47 +426,42 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
                           setStatusUpdateAppId(app.id);
                           setTargetStatus(app.status);
                         }}
-                        className="px-3 py-1 bg-[#1B4332] text-white rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition"
+                        className="px-2.5 py-1 bg-[#183B2B] text-white rounded-lg text-xs font-bold hover:bg-[#24533E] transition"
                       >
                         Update Status
                       </button>
                     </div>
                   </div>
 
-                  {/* Summary Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-[#FAF8F5] p-3 rounded-xl border border-[#F4EFEA]">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs bg-[#FAF7F2] p-2.5 rounded-xl border border-[#F2ECE4]">
                     <div>
-                      <span className="text-[#8E9991] block">Housing & Yard</span>
-                      <span className="font-semibold text-[#1C241E]">
-                        {app.housingType.replace('_', ' ')} •{' '}
-                        {app.hasYard ? 'Fenced Yard' : 'No Yard'}
+                      <span className="text-[#8B958E] text-[10px] block">Housing</span>
+                      <span className="font-semibold text-[#181F1A]">
+                        {app.housingType.replace('_', ' ')} • {app.hasYard ? 'Yard' : 'No Yard'}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[#8E9991] block">Hours Alone / Day</span>
-                      <span className="font-semibold text-[#1C241E]">
+                      <span className="text-[#8B958E] text-[10px] block">Hours Alone</span>
+                      <span className="font-semibold text-[#181F1A]">
                         {app.hoursAlonePerDay} hours / day
                       </span>
                     </div>
                     <div>
-                      <span className="text-[#8E9991] block">Veterinary Reference</span>
-                      <span className="font-semibold text-[#1C241E]">
-                        {app.vetReference?.clinicName || 'None listed'} (
-                        {app.vetReference?.phone || 'N/A'})
+                      <span className="text-[#8B958E] text-[10px] block">Veterinary Reference</span>
+                      <span className="font-semibold text-[#181F1A]">
+                        {app.vetReference?.clinicName || 'None listed'}
                       </span>
                     </div>
                   </div>
 
-                  <div className="text-xs text-[#2D372E] space-y-1">
-                    <span className="font-semibold text-[#1C241E]">Applicant Motivation:</span>
-                    <p className="italic bg-[#FAF8F5] p-2.5 rounded-lg border border-[#E6DFD5]">
-                      "{app.reasonForAdopting}"
-                    </p>
+                  <div className="text-xs text-[#58625B]">
+                    <span className="font-semibold text-[#181F1A]">Motivation:</span>{' '}
+                    <span className="italic">"{app.reasonForAdopting}"</span>
                   </div>
 
                   {app.shelterNotes && (
-                    <div className="text-xs text-[#1B4332] bg-[#EBF7EE] p-2.5 rounded-lg border border-[#D8F3DC]">
-                      <strong>Staff Note:</strong> {app.shelterNotes}
+                    <div className="text-[11px] text-[#183B2B] bg-[#EDF4F0] p-2 rounded-lg border border-[#D8F3DC]">
+                      <strong>Coordinator Log:</strong> {app.shelterNotes}
                     </div>
                   )}
                 </div>
@@ -502,19 +471,19 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
         </div>
       )}
 
-      {/* TAB 3: SHELTER GROUP VISITS */}
+      {/* TAB 3: VISITS */}
       {activeTab === 'visits' && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold font-serif-heading text-[#1B4332]">
-              Group Shelter Visits & Orientations
+            <h2 className="text-base font-bold font-serif-heading text-[#181F1A]">
+              Group Visit Schedule
             </h2>
             <button
               onClick={() => setShowCreateVisitModal(true)}
-              className="px-4 py-2 bg-[#1B4332] hover:bg-[#2D6A4F] text-white rounded-xl text-xs font-bold transition flex items-center space-x-2 shadow-xs"
+              className="px-3.5 py-1.5 bg-[#183B2B] hover:bg-[#24533E] text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-xs"
             >
-              <PlusCircle className="w-4 h-4" />
-              <span>Schedule New Visit Slot</span>
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>Schedule Visit Slot</span>
             </button>
           </div>
 
@@ -525,50 +494,47 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
               return (
                 <div
                   key={visit.id}
-                  className="bg-white rounded-2xl border border-[#E6DFD5] p-5 shadow-xs space-y-4 flex flex-col justify-between"
+                  className="bg-white rounded-2xl border border-[#EAE4DC] p-4 shadow-xs space-y-3"
                 >
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-bold text-base font-serif-heading text-[#1C241E]">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-sm font-serif-heading text-[#181F1A]">
                         {visit.title}
                       </h3>
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#EBF7EE] text-[#1B4332] capitalize">
-                        {visit.status}
-                      </span>
+                      <p className="text-xs text-[#58625B] mt-0.5">{visit.description}</p>
                     </div>
-
-                    <p className="text-xs text-[#5C675F]">{visit.description}</p>
-
-                    <div className="flex flex-wrap gap-3 text-xs text-[#2D6A4F] font-semibold pt-1">
-                      <span>Date: {visit.date}</span>
-                      <span>Time: {visit.startTime} - {visit.endTime}</span>
-                      <span>
-                        Capacity: {visit.participantCount} / {visit.capacity}
-                      </span>
-                    </div>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EDF4F0] text-[#183B2B] capitalize">
+                      {visit.status}
+                    </span>
                   </div>
 
-                  {/* Registered Participants Roster */}
-                  <div className="pt-3 border-t border-[#F4EFEA] space-y-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#8E9991] block">
-                      Registered Prospective Adopters ({participants.length})
+                  <div className="text-xs text-[#357457] font-semibold flex flex-wrap gap-2 pt-1 border-t border-[#F2ECE4]">
+                    <span>{visit.date}</span>
+                    <span>•</span>
+                    <span>{visit.startTime} - {visit.endTime}</span>
+                    <span>•</span>
+                    <span>
+                      {visit.participantCount} / {visit.capacity} Attendees
                     </span>
-                    {participants.length === 0 ? (
-                      <p className="text-xs text-[#8E9991] italic">No signups yet.</p>
-                    ) : (
-                      <div className="space-y-1">
+                  </div>
+
+                  {participants.length > 0 && (
+                    <div className="pt-1">
+                      <span className="text-[10px] font-bold text-[#8B958E] uppercase tracking-wider block mb-1">
+                        Roster:
+                      </span>
+                      <div className="flex flex-wrap gap-1">
                         {participants.map((p) => (
-                          <div
+                          <span
                             key={p.id}
-                            className="text-xs bg-[#FAF8F5] px-2.5 py-1.5 rounded-lg border border-[#F4EFEA] flex justify-between"
+                            className="text-[10px] bg-[#FAF7F2] border border-[#EAE4DC] text-[#181F1A] px-2 py-0.5 rounded"
                           >
-                            <span className="font-semibold text-[#1C241E]">{p.userName}</span>
-                            <span className="text-[#5C675F]">{p.userEmail}</span>
-                          </div>
+                            {p.userName}
+                          </span>
                         ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -576,193 +542,155 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
         </div>
       )}
 
-      {/* MODAL: ADD NEW DOG */}
+      {/* MODAL: ADD DOG */}
       {showAddDogModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-          <div className="bg-[#FAF8F5] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-[#E6DFD5] overflow-hidden">
-            <div className="bg-white border-b border-[#E6DFD5] px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold font-serif-heading text-[#1B4332]">
-                Create Dog Listing ({shelter.name})
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in">
+          <div className="bg-[#FAF7F2] rounded-3xl w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl border border-[#EAE4DC] overflow-hidden">
+            <div className="bg-white border-b border-[#EAE4DC] px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold font-serif-heading text-[#181F1A]">
+                Add Dog Listing ({shelter.name})
               </h2>
               <button
                 onClick={() => setShowAddDogModal(false)}
-                className="p-1.5 rounded-lg text-[#5C675F] hover:bg-[#F4EFEA]"
+                className="p-1 rounded-lg text-[#58625B] hover:bg-[#FAF7F2]"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateDog} className="p-6 space-y-4 overflow-y-auto flex-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <form onSubmit={handleCreateDog} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-[#1C241E] block mb-1">Dog Name *</label>
+                  <label className="font-semibold text-[#181F1A] block mb-1">Dog Name *</label>
                   <input
                     type="text"
                     required
                     value={newDogName}
                     onChange={(e) => setNewDogName(e.target.value)}
                     placeholder="e.g. Bella"
-                    className="w-full bg-white border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E] focus:outline-none focus:border-[#1B4332]"
+                    className="w-full bg-white border border-[#EAE4DC] rounded-xl p-2.5 text-xs text-[#181F1A] focus:outline-none focus:border-[#183B2B]"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-[#1C241E] block mb-1">Breed / Mix *</label>
+                  <label className="font-semibold text-[#181F1A] block mb-1">Breed *</label>
                   <input
                     type="text"
                     required
                     value={newDogBreed}
                     onChange={(e) => setNewDogBreed(e.target.value)}
-                    placeholder="e.g. Shepherd & Husky Mix"
-                    className="w-full bg-white border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E] focus:outline-none focus:border-[#1B4332]"
+                    placeholder="e.g. Shepherd Mix"
+                    className="w-full bg-white border border-[#EAE4DC] rounded-xl p-2.5 text-xs text-[#181F1A] focus:outline-none focus:border-[#183B2B]"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="font-semibold text-[#1C241E] block mb-1">Age in Years</label>
+                  <label className="font-semibold text-[#181F1A] block mb-1">Age (Yrs)</label>
                   <input
                     type="number"
                     step="0.5"
                     min="0.2"
-                    max="20"
                     value={newDogAge}
                     onChange={(e) => setNewDogAge(parseFloat(e.target.value) || 1)}
-                    className="w-full bg-white border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E] focus:outline-none focus:border-[#1B4332]"
+                    className="w-full bg-white border border-[#EAE4DC] rounded-xl p-2 text-xs text-[#181F1A]"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-[#1C241E] block mb-1">Adoption Fee ($)</label>
+                  <label className="font-semibold text-[#181F1A] block mb-1">Size</label>
+                  <select
+                    value={newDogSize}
+                    onChange={(e) => setNewDogSize(e.target.value as any)}
+                    className="w-full bg-white border border-[#EAE4DC] rounded-xl p-2 text-xs text-[#181F1A]"
+                  >
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                    <option value="giant">Giant</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-semibold text-[#181F1A] block mb-1">Fee ($)</label>
                   <input
                     type="number"
                     min="0"
                     value={newDogFee}
                     onChange={(e) => setNewDogFee(parseInt(e.target.value) || 0)}
-                    className="w-full bg-white border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E] focus:outline-none focus:border-[#1B4332]"
+                    className="w-full bg-white border border-[#EAE4DC] rounded-xl p-2 text-xs text-[#181F1A]"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <div>
-                  <label className="font-semibold text-[#1C241E] block mb-1">Size</label>
-                  <select
-                    value={newDogSize}
-                    onChange={(e) => setNewDogSize(e.target.value as any)}
-                    className="w-full bg-white border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E]"
-                  >
-                    <option value="small">Small (&lt; 25 lbs)</option>
-                    <option value="medium">Medium (25-55 lbs)</option>
-                    <option value="large">Large (55-85 lbs)</option>
-                    <option value="giant">Giant (85+ lbs)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="font-semibold text-[#1C241E] block mb-1">Gender</label>
-                  <select
-                    value={newDogGender}
-                    onChange={(e) => setNewDogGender(e.target.value as any)}
-                    className="w-full bg-white border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E]"
-                  >
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="font-semibold text-[#1C241E] block mb-1">Energy Level</label>
-                  <select
-                    value={newDogEnergy}
-                    onChange={(e) => setNewDogEnergy(e.target.value as any)}
-                    className="w-full bg-white border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E]"
-                  >
-                    <option value="low">Low Energy</option>
-                    <option value="moderate">Moderate Energy</option>
-                    <option value="high">High Energy</option>
-                    <option value="very_high">Very High Energy</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="text-xs space-y-2">
-                <label className="font-semibold text-[#1C241E] block">Photo URL *</label>
+              <div>
+                <label className="font-semibold text-[#181F1A] block mb-1">Photo URL *</label>
                 <input
                   type="url"
                   required
                   value={newDogPhoto}
                   onChange={(e) => setNewDogPhoto(e.target.value)}
-                  className="w-full bg-white border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E]"
+                  className="w-full bg-white border border-[#EAE4DC] rounded-xl p-2.5 text-xs text-[#181F1A]"
                 />
               </div>
 
-              <div className="text-xs space-y-2">
-                <label className="font-semibold text-[#1C241E] block">Video URL (Optional)</label>
-                <input
-                  type="url"
-                  placeholder="https://www.youtube.com/embed/..."
-                  value={newDogVideo}
-                  onChange={(e) => setNewDogVideo(e.target.value)}
-                  className="w-full bg-white border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E]"
-                />
-              </div>
-
-              <div className="text-xs space-y-2">
-                <label className="font-semibold text-[#1C241E] block">
-                  Backstory & Temperament Details *
-                </label>
+              <div>
+                <label className="font-semibold text-[#181F1A] block mb-1">Backstory & Personality *</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   required
                   value={newDogBackstory}
                   onChange={(e) => setNewDogBackstory(e.target.value)}
-                  placeholder="Describe rescue history, personality, quirks, and ideal home environment..."
-                  className="w-full bg-white border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E]"
+                  placeholder="Describe temperament, care notes, and ideal placement..."
+                  className="w-full bg-white border border-[#EAE4DC] rounded-xl p-2.5 text-xs text-[#181F1A]"
                 />
               </div>
 
               {/* Welfare flags */}
-              <div className="bg-white p-3 rounded-xl border border-[#E6DFD5] space-y-2 text-xs">
-                <span className="font-semibold text-[#1C241E] block">Welfare & Social Flags:</span>
-                <div className="flex flex-wrap gap-4">
+              <div className="bg-white p-3 rounded-xl border border-[#EAE4DC] space-y-1.5">
+                <span className="font-semibold text-[#181F1A] block">Social Welfare Checks:</span>
+                <div className="flex flex-wrap gap-4 text-xs">
                   <label className="flex items-center space-x-1.5 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={newDogKids}
                       onChange={(e) => setNewDogKids(e.target.checked)}
-                      className="rounded text-[#1B4332]"
+                      className="rounded text-[#183B2B] accent-[#183B2B]"
                     />
-                    <span>Good with kids</span>
+                    <span>Kid-Safe</span>
                   </label>
                   <label className="flex items-center space-x-1.5 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={newDogCats}
                       onChange={(e) => setNewDogCats(e.target.checked)}
-                      className="rounded text-[#1B4332]"
+                      className="rounded text-[#183B2B] accent-[#183B2B]"
                     />
-                    <span>Good with cats (low prey drive)</span>
+                    <span>Cat-Safe (Low prey drive)</span>
                   </label>
                   <label className="flex items-center space-x-1.5 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={newDogDogs}
                       onChange={(e) => setNewDogDogs(e.target.checked)}
-                      className="rounded text-[#1B4332]"
+                      className="rounded text-[#183B2B] accent-[#183B2B]"
                     />
-                    <span>Good with other dogs</span>
+                    <span>Dog-Social</span>
                   </label>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-2">
+              <div className="flex justify-end space-x-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setShowAddDogModal(false)}
-                  className="px-4 py-2 border rounded-xl text-xs text-[#5C675F]"
+                  className="px-4 py-2 border border-[#EAE4DC] rounded-xl text-[#58625B]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-[#1B4332] text-white rounded-xl text-xs font-bold hover:bg-[#2D6A4F]"
+                  className="px-5 py-2 bg-[#183B2B] text-white rounded-xl font-bold hover:bg-[#24533E]"
                 >
-                  Publish Dog Listing
+                  Publish Listing
                 </button>
               </div>
             </form>
@@ -770,21 +698,21 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
         </div>
       )}
 
-      {/* MODAL: UPDATE APPLICATION STATUS */}
+      {/* MODAL: UPDATE STATUS */}
       {statusUpdateAppId && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-[#E6DFD5] space-y-4">
-            <h3 className="text-lg font-bold font-serif-heading text-[#1B4332]">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl border border-[#EAE4DC] space-y-4">
+            <h3 className="text-lg font-bold font-serif-heading text-[#181F1A]">
               Update Application Status
             </h3>
 
-            <form onSubmit={handleApplicationStatusSubmit} className="space-y-4 text-xs">
+            <form onSubmit={handleApplicationStatusSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="font-semibold text-[#1C241E] block mb-1">New Status</label>
+                <label className="font-semibold text-[#181F1A] block mb-1">New Status</label>
                 <select
                   value={targetStatus}
                   onChange={(e) => setTargetStatus(e.target.value as ApplicationStatus)}
-                  className="w-full bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E] font-semibold"
+                  className="w-full bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl p-2.5 text-xs text-[#181F1A] font-semibold"
                 >
                   <option value="under_review">Under Shelter Review</option>
                   <option value="more_info_requested">Request More Information</option>
@@ -794,32 +722,32 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
               </div>
 
               <div>
-                <label className="font-semibold text-[#1C241E] block mb-1">
-                  Coordinator Note for Adopter & Audit Trail
+                <label className="font-semibold text-[#181F1A] block mb-1">
+                  Coordinator Note (Visible to applicant)
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   required
                   value={statusNote}
                   onChange={(e) => setStatusNote(e.target.value)}
                   placeholder="e.g. Landlord verification received. Approved for Saturday 11am visit."
-                  className="w-full bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E]"
+                  className="w-full bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl p-2.5 text-xs text-[#181F1A]"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2">
+              <div className="flex justify-end space-x-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setStatusUpdateAppId(null)}
-                  className="px-4 py-2 border rounded-xl text-[#5C675F]"
+                  className="px-4 py-2 border border-[#EAE4DC] rounded-xl text-[#58625B]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#1B4332] text-white rounded-xl font-bold hover:bg-[#2D6A4F]"
+                  className="px-5 py-2 bg-[#183B2B] text-white rounded-xl font-bold hover:bg-[#24533E]"
                 >
-                  Confirm Status Change
+                  Confirm Status
                 </button>
               </div>
             </form>
@@ -830,55 +758,54 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
       {/* MODAL: CREATE VISIT */}
       {showCreateVisitModal && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-[#E6DFD5] space-y-4">
-            <h3 className="text-lg font-bold font-serif-heading text-[#1B4332]">
-              Schedule Group Shelter Visit
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl border border-[#EAE4DC] space-y-4">
+            <h3 className="text-lg font-bold font-serif-heading text-[#181F1A]">
+              Schedule Group Visit Slot
             </h3>
 
             {visitError && (
-              <div className="bg-[#FFF3F0] text-[#BA5536] p-3 rounded-xl text-xs">
+              <div className="bg-[#FAF0EC] text-[#B85438] p-3 rounded-xl text-xs">
                 {visitError}
               </div>
             )}
 
             <form onSubmit={handleCreateVisit} className="space-y-3 text-xs">
               <div>
-                <label className="font-semibold text-[#1C241E] block mb-1">Visit Title *</label>
+                <label className="font-semibold text-[#181F1A] block mb-1">Title *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Weekend Foster & Adopter Pack Walk"
                   value={visitTitle}
                   onChange={(e) => setVisitTitle(e.target.value)}
-                  className="w-full bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E]"
+                  className="w-full bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl p-2.5 text-xs text-[#181F1A]"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-[#1C241E] block mb-1">Description *</label>
+                <label className="font-semibold text-[#181F1A] block mb-1">Description *</label>
                 <textarea
                   rows={2}
                   required
-                  placeholder="Detail activities, safety guidelines, and what prospective adopters will experience..."
                   value={visitDescription}
                   onChange={(e) => setVisitDescription(e.target.value)}
-                  className="w-full bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl p-2.5 text-xs text-[#1C241E]"
+                  className="w-full bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl p-2.5 text-xs text-[#181F1A]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="font-semibold text-[#1C241E] block mb-1">Date *</label>
+                  <label className="font-semibold text-[#181F1A] block mb-1">Date *</label>
                   <input
                     type="date"
                     required
                     value={visitDate}
                     onChange={(e) => setVisitDate(e.target.value)}
-                    className="w-full bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl p-2 text-xs text-[#1C241E]"
+                    className="w-full bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl p-2 text-xs text-[#181F1A]"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-[#1C241E] block mb-1">Capacity *</label>
+                  <label className="font-semibold text-[#181F1A] block mb-1">Capacity *</label>
                   <input
                     type="number"
                     min="1"
@@ -886,30 +813,30 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
                     required
                     value={visitCapacity}
                     onChange={(e) => setVisitCapacity(parseInt(e.target.value) || 1)}
-                    className="w-full bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl p-2 text-xs text-[#1C241E]"
+                    className="w-full bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl p-2 text-xs text-[#181F1A]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="font-semibold text-[#1C241E] block mb-1">Start Time</label>
+                  <label className="font-semibold text-[#181F1A] block mb-1">Start Time</label>
                   <input
                     type="time"
                     required
                     value={visitStartTime}
                     onChange={(e) => setVisitStartTime(e.target.value)}
-                    className="w-full bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl p-2 text-xs text-[#1C241E]"
+                    className="w-full bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl p-2 text-xs text-[#181F1A]"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-[#1C241E] block mb-1">End Time</label>
+                  <label className="font-semibold text-[#181F1A] block mb-1">End Time</label>
                   <input
                     type="time"
                     required
                     value={visitEndTime}
                     onChange={(e) => setVisitEndTime(e.target.value)}
-                    className="w-full bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl p-2 text-xs text-[#1C241E]"
+                    className="w-full bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl p-2 text-xs text-[#181F1A]"
                   />
                 </div>
               </div>
@@ -918,15 +845,15 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
                 <button
                   type="button"
                   onClick={() => setShowCreateVisitModal(false)}
-                  className="px-4 py-2 border rounded-xl text-[#5C675F]"
+                  className="px-4 py-2 border border-[#EAE4DC] rounded-xl text-[#58625B]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#1B4332] text-white rounded-xl font-bold hover:bg-[#2D6A4F]"
+                  className="px-5 py-2 bg-[#183B2B] text-white rounded-xl font-bold hover:bg-[#24533E]"
                 >
-                  Publish Visit Slot
+                  Publish Visit
                 </button>
               </div>
             </form>

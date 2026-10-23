@@ -4,17 +4,15 @@ import {
   X,
   RotateCcw,
   Sparkles,
-  SlidersHorizontal,
   Search,
   LayoutGrid,
   Layers,
   ChevronRight,
-  ShieldCheck,
   Building2,
   MapPin,
-  Flame,
   Info,
-  ExternalLink,
+  Check,
+  Filter,
 } from 'lucide-react';
 import { Dog, AdopterLifestylePreferences, DogSize, DogEnergy, DogAgeGroup } from '../../types';
 import { calculateCompatibility } from '../matching/matchingEngine';
@@ -52,7 +50,7 @@ export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
   // Filter available dogs
   const filteredDogs = useMemo(() => {
     return dogs.filter((dog) => {
-      // Basic availability
+      // Basic availability: available or pending
       if (dog.status !== 'available' && dog.status !== 'pending_adoption') {
         return false;
       }
@@ -128,238 +126,236 @@ export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
     setSwipedHistory([]);
   };
 
+  const hasActiveFilters =
+    filterSize !== 'all' ||
+    filterEnergy !== 'all' ||
+    filterAge !== 'all' ||
+    searchQuery.trim().length > 0 ||
+    onlyHighCompatibility ||
+    mustBeCatSafe ||
+    mustBeKidSafe;
+
+  const resetAllFilters = () => {
+    setSearchQuery('');
+    setFilterSize('all');
+    setFilterEnergy('all');
+    setFilterAge('all');
+    setOnlyHighCompatibility(false);
+    setMustBeCatSafe(false);
+    setMustBeKidSafe(false);
+    setActiveStackIndex(0);
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* Header & Mission Banner */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-[#E6DFD5]">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-6">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#EBF7EE] text-[#1B4332] text-xs font-semibold mb-2">
-            <Sparkles className="w-3.5 h-3.5 text-[#2D6A4F]" />
-            <span>Humane, Personality-First Adoption</span>
+          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-[#EDF4F0] text-[#183B2B] text-[11px] font-semibold mb-1.5">
+            <Sparkles className="w-3 h-3 text-[#357457]" />
+            <span>Personality-First Dog Discovery</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif-heading text-[#1B4332] tracking-tight">
-            Meet Dogs Waiting for You
+          <h1 className="text-2xl sm:text-3xl font-bold font-serif-heading text-[#181F1A] tracking-tight">
+            Discover Companions
           </h1>
-          <p className="text-sm text-[#5C675F] max-w-2xl mt-1">
-            Every dog has a backstory and individual needs. Explore rescue profiles, review lifestyle compatibility, and schedule verified shelter visits.
+          <p className="text-xs sm:text-sm text-[#58625B] max-w-xl mt-0.5">
+            Find rescue dogs whose temperament, energy, and routine align with your home.
           </p>
         </div>
 
-        {/* View Toggle */}
-        <div className="flex items-center space-x-1 bg-[#EBE5DA] p-1 rounded-xl self-start md:self-end">
+        {/* View Mode Toggle */}
+        <div className="inline-flex items-center p-1 bg-[#EAE4DC]/70 rounded-xl self-start sm:self-auto border border-[#EAE4DC]">
           <button
             id="tab-swipe-stack"
             onClick={() => setViewMode('stack')}
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
               viewMode === 'stack'
-                ? 'bg-white text-[#1B4332] shadow-xs'
-                : 'text-[#5C675F] hover:text-[#1B4332]'
+                ? 'bg-white text-[#183B2B] shadow-xs'
+                : 'text-[#58625B] hover:text-[#181F1A]'
             }`}
           >
-            <Layers className="w-4 h-4" />
-            <span>Swipe Stack</span>
+            <Layers className="w-3.5 h-3.5" />
+            <span>Deck</span>
           </button>
           <button
             id="tab-browse-grid"
             onClick={() => setViewMode('grid')}
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
               viewMode === 'grid'
-                ? 'bg-white text-[#1B4332] shadow-xs'
-                : 'text-[#5C675F] hover:text-[#1B4332]'
+                ? 'bg-white text-[#183B2B] shadow-xs'
+                : 'text-[#58625B] hover:text-[#181F1A]'
             }`}
           >
-            <LayoutGrid className="w-4 h-4" />
-            <span>Browse Grid ({filteredDogs.length})</span>
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>Grid ({filteredDogs.length})</span>
           </button>
         </div>
       </div>
 
-      {/* Search & Filter Toolbar */}
-      <div className="bg-white rounded-2xl p-4 border border-[#E6DFD5] shadow-xs space-y-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search Bar */}
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E9991]" />
-            <input
-              type="text"
-              placeholder="Search by dog name, breed, location, or shelter..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setActiveStackIndex(0);
-              }}
-              className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#FAF8F5] border border-[#E6DFD5] text-xs text-[#1C241E] focus:outline-none focus:border-[#1B4332]"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8E9991] hover:text-[#1C241E]"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
-          {/* Quick Filter Selectors */}
-          <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={filterSize}
-              onChange={(e) => {
-                setFilterSize(e.target.value as any);
-                setActiveStackIndex(0);
-              }}
-              className="bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl px-3 py-2 text-xs font-medium text-[#1C241E] focus:outline-none focus:border-[#1B4332]"
+      {/* Unified Search & Filter Toolbar */}
+      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-[#EAE4DC] shadow-xs space-y-3">
+        {/* Search Input Row */}
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B958E]" />
+          <input
+            type="text"
+            placeholder="Search by name, breed, shelter, or city..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setActiveStackIndex(0);
+            }}
+            className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FAF7F2] border border-[#EAE4DC] text-xs text-[#181F1A] placeholder:text-[#8B958E] focus:outline-none focus:border-[#183B2B] transition"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8B958E] hover:text-[#181F1A]"
             >
-              <option value="all">All Sizes</option>
-              <option value="small">Small</option>
-              <option value="medium">Medium</option>
-              <option value="large">Large</option>
-              <option value="giant">Giant</option>
-            </select>
-
-            <select
-              value={filterEnergy}
-              onChange={(e) => {
-                setFilterEnergy(e.target.value as any);
-                setActiveStackIndex(0);
-              }}
-              className="bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl px-3 py-2 text-xs font-medium text-[#1C241E] focus:outline-none focus:border-[#1B4332]"
-            >
-              <option value="all">All Energy Levels</option>
-              <option value="low">Low Energy</option>
-              <option value="moderate">Moderate Energy</option>
-              <option value="high">High Energy</option>
-              <option value="very_high">Very High Energy</option>
-            </select>
-
-            <select
-              value={filterAge}
-              onChange={(e) => {
-                setFilterAge(e.target.value as any);
-                setActiveStackIndex(0);
-              }}
-              className="bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl px-3 py-2 text-xs font-medium text-[#1C241E] focus:outline-none focus:border-[#1B4332]"
-            >
-              <option value="all">All Ages</option>
-              <option value="puppy">Puppies</option>
-              <option value="young">Young</option>
-              <option value="adult">Adult</option>
-              <option value="senior">Senior Dogs</option>
-            </select>
-          </div>
+              Clear
+            </button>
+          )}
         </div>
 
-        {/* Checkbox Quick Filters */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#F4EFEA] text-xs">
-          <label className="flex items-center space-x-1.5 cursor-pointer bg-[#FAF8F5] px-2.5 py-1.5 rounded-lg border border-[#E6DFD5] hover:border-[#1B4332]">
-            <input
-              type="checkbox"
-              checked={onlyHighCompatibility}
-              onChange={(e) => {
-                setOnlyHighCompatibility(e.target.checked);
-                setActiveStackIndex(0);
-              }}
-              className="rounded text-[#1B4332] focus:ring-0"
-            />
-            <span className="font-medium text-[#1C241E]">High Match Only (&gt;80%)</span>
-          </label>
+        {/* Filter Chips Bar */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#F2ECE4] text-xs">
+          {/* Quick Selects */}
+          <select
+            value={filterSize}
+            onChange={(e) => {
+              setFilterSize(e.target.value as any);
+              setActiveStackIndex(0);
+            }}
+            className="bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl px-2.5 py-1 text-xs text-[#181F1A] font-medium focus:outline-none focus:border-[#183B2B]"
+          >
+            <option value="all">All Sizes</option>
+            <option value="small">Small (&lt; 25 lbs)</option>
+            <option value="medium">Medium (25-55 lbs)</option>
+            <option value="large">Large (55-85 lbs)</option>
+            <option value="giant">Giant (85+ lbs)</option>
+          </select>
 
-          <label className="flex items-center space-x-1.5 cursor-pointer bg-[#FAF8F5] px-2.5 py-1.5 rounded-lg border border-[#E6DFD5] hover:border-[#1B4332]">
-            <input
-              type="checkbox"
-              checked={mustBeCatSafe}
-              onChange={(e) => {
-                setMustBeCatSafe(e.target.checked);
-                setActiveStackIndex(0);
-              }}
-              className="rounded text-[#1B4332] focus:ring-0"
-            />
-            <span className="font-medium text-[#1C241E]">Cat-Friendly Only</span>
-          </label>
+          <select
+            value={filterEnergy}
+            onChange={(e) => {
+              setFilterEnergy(e.target.value as any);
+              setActiveStackIndex(0);
+            }}
+            className="bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl px-2.5 py-1 text-xs text-[#181F1A] font-medium focus:outline-none focus:border-[#183B2B]"
+          >
+            <option value="all">All Energies</option>
+            <option value="low">Low Energy</option>
+            <option value="moderate">Moderate Energy</option>
+            <option value="high">High Energy</option>
+            <option value="very_high">Very High Energy</option>
+          </select>
 
-          <label className="flex items-center space-x-1.5 cursor-pointer bg-[#FAF8F5] px-2.5 py-1.5 rounded-lg border border-[#E6DFD5] hover:border-[#1B4332]">
-            <input
-              type="checkbox"
-              checked={mustBeKidSafe}
-              onChange={(e) => {
-                setMustBeKidSafe(e.target.checked);
-                setActiveStackIndex(0);
-              }}
-              className="rounded text-[#1B4332] focus:ring-0"
-            />
-            <span className="font-medium text-[#1C241E]">Gentle with Kids</span>
-          </label>
+          <select
+            value={filterAge}
+            onChange={(e) => {
+              setFilterAge(e.target.value as any);
+              setActiveStackIndex(0);
+            }}
+            className="bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl px-2.5 py-1 text-xs text-[#181F1A] font-medium focus:outline-none focus:border-[#183B2B]"
+          >
+            <option value="all">All Ages</option>
+            <option value="puppy">Puppy</option>
+            <option value="young">Young</option>
+            <option value="adult">Adult</option>
+            <option value="senior">Senior</option>
+          </select>
 
-          {(filterSize !== 'all' ||
-            filterEnergy !== 'all' ||
-            filterAge !== 'all' ||
-            searchQuery ||
-            onlyHighCompatibility ||
-            mustBeCatSafe ||
-            mustBeKidSafe) && (
+          {/* Quick Toggles */}
+          <button
+            onClick={() => {
+              setOnlyHighCompatibility(!onlyHighCompatibility);
+              setActiveStackIndex(0);
+            }}
+            className={`px-2.5 py-1 rounded-xl border text-xs font-medium transition ${
+              onlyHighCompatibility
+                ? 'bg-[#183B2B] text-white border-[#183B2B]'
+                : 'bg-[#FAF7F2] text-[#58625B] border-[#EAE4DC] hover:border-[#D5CEBF]'
+            }`}
+          >
+            High Match (&gt;80%)
+          </button>
+
+          <button
+            onClick={() => {
+              setMustBeCatSafe(!mustBeCatSafe);
+              setActiveStackIndex(0);
+            }}
+            className={`px-2.5 py-1 rounded-xl border text-xs font-medium transition ${
+              mustBeCatSafe
+                ? 'bg-[#183B2B] text-white border-[#183B2B]'
+                : 'bg-[#FAF7F2] text-[#58625B] border-[#EAE4DC] hover:border-[#D5CEBF]'
+            }`}
+          >
+            Cat-Friendly
+          </button>
+
+          <button
+            onClick={() => {
+              setMustBeKidSafe(!mustBeKidSafe);
+              setActiveStackIndex(0);
+            }}
+            className={`px-2.5 py-1 rounded-xl border text-xs font-medium transition ${
+              mustBeKidSafe
+                ? 'bg-[#183B2B] text-white border-[#183B2B]'
+                : 'bg-[#FAF7F2] text-[#58625B] border-[#EAE4DC] hover:border-[#D5CEBF]'
+            }`}
+          >
+            Kid-Safe
+          </button>
+
+          {hasActiveFilters && (
             <button
-              onClick={() => {
-                setSearchQuery('');
-                setFilterSize('all');
-                setFilterEnergy('all');
-                setFilterAge('all');
-                setOnlyHighCompatibility(false);
-                setMustBeCatSafe(false);
-                setMustBeKidSafe(false);
-                setActiveStackIndex(0);
-              }}
-              className="text-[#BA5536] hover:underline font-semibold ml-auto text-xs"
+              onClick={resetAllFilters}
+              className="text-[#B85438] hover:underline font-semibold ml-auto text-xs"
             >
-              Reset all filters
+              Reset filters
             </button>
           )}
         </div>
       </div>
 
-      {/* VIEW MODE 1: TINDER-STYLE CARD STACK */}
+      {/* VIEW 1: TINDER-STYLE DECK VIEW (Optimized proportions for viewport safety) */}
       {viewMode === 'stack' ? (
-        <div className="flex flex-col items-center justify-center py-4">
+        <div className="flex flex-col items-center justify-center py-2">
           {currentStackDog ? (
-            <div className="w-full max-w-md space-y-4">
-              {/* Stack Progress Counter */}
-              <div className="flex justify-between items-center text-xs text-[#5C675F] px-1">
-                <span>
-                  Dog {activeStackIndex + 1} of {filteredDogs.length}
-                </span>
-                <span className="font-medium text-[#1B4332]">
-                  Keyboard: ← Pass | → Save & Like | Space Details
-                </span>
-              </div>
-
-              {/* Main Dog Card */}
-              <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-[#E6DFD5] relative flex flex-col group transition-all duration-300">
-                {/* Photo Header */}
-                <div className="relative aspect-4/5 w-full bg-[#E6DFD5] overflow-hidden">
+            <div className="w-full max-w-sm sm:max-w-md space-y-3">
+              {/* Stack Card (Height capped so card + controls fit comfortably above the fold) */}
+              <div className="bg-white rounded-3xl overflow-hidden shadow-md border border-[#EAE4DC] relative flex flex-col group transition duration-200">
+                {/* Photo & Overlay Header */}
+                <div className="relative h-80 sm:h-96 w-full bg-[#EAE4DC] overflow-hidden">
                   <img
                     src={currentStackDog.photos[0]}
                     alt={currentStackDog.name}
                     className="w-full h-full object-cover group-hover:scale-102 transition duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  {/* Gentle gradient vignette for readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
 
                   {/* Top Badges */}
-                  <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
-                    <span className="bg-[#1B4332]/85 text-[#FAF8F5] text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-xs flex items-center space-x-1">
-                      <Building2 className="w-3.5 h-3.5 text-[#52B788]" />
-                      <span>{currentStackDog.shelterName || 'Shelter Partner'}</span>
+                  <div className="absolute top-3.5 left-3.5 right-3.5 flex justify-between items-center pointer-events-auto">
+                    <span className="bg-[#183B2B]/90 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-xs flex items-center space-x-1 shadow-xs">
+                      <Building2 className="w-3 h-3 text-[#EDF4F0]" />
+                      <span className="truncate max-w-[140px] sm:max-w-[200px]">
+                        {currentStackDog.shelterName || 'Shelter Partner'}
+                      </span>
                     </span>
 
-                    {/* Compatibility Badge */}
+                    {/* Match Score Badge */}
                     {(() => {
                       const match = calculateCompatibility(adopterPreferences, currentStackDog);
                       return (
                         <span
-                          className={`text-xs font-bold px-3 py-1 rounded-full shadow-xs backdrop-blur-xs ${
+                          className={`text-xs font-bold px-2.5 py-1 rounded-full shadow-xs backdrop-blur-xs ${
                             match.hardConstraintFailed
-                              ? 'bg-[#BA5536] text-white'
+                              ? 'bg-[#B85438] text-white'
                               : match.score >= 80
-                              ? 'bg-[#2D6A4F] text-white'
-                              : 'bg-white/90 text-[#1B4332]'
+                              ? 'bg-[#357457] text-white'
+                              : 'bg-white/95 text-[#181F1A]'
                           }`}
                         >
                           {match.score}% Match
@@ -368,134 +364,162 @@ export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
                     })()}
                   </div>
 
-                  {/* Bottom Info Overlay */}
-                  <div className="absolute bottom-4 left-4 right-4 text-white space-y-1">
-                    <div className="flex items-baseline space-x-2">
-                      <h2 className="text-3xl font-bold font-serif-heading">
-                        {currentStackDog.name}
-                      </h2>
-                      <span className="text-lg opacity-90">{currentStackDog.ageYears} yrs</span>
+                  {/* Bottom Dog Info Overlay */}
+                  <div className="absolute bottom-3.5 left-4 right-4 text-white space-y-1 pointer-events-auto">
+                    <div className="flex items-baseline justify-between">
+                      <div className="flex items-baseline space-x-2">
+                        <h2 className="text-2xl sm:text-3xl font-bold font-serif-heading tracking-tight">
+                          {currentStackDog.name}
+                        </h2>
+                        <span className="text-sm opacity-90 font-light">
+                          {currentStackDog.ageYears} yrs
+                        </span>
+                      </div>
+                      <span className="text-xs font-bold bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded-lg">
+                        ${currentStackDog.adoptionFee}
+                      </span>
                     </div>
 
-                    <p className="text-sm text-gray-200">
+                    <p className="text-xs text-gray-200 truncate">
                       {currentStackDog.breed} • {currentStackDog.location}
                     </p>
 
-                    {/* Trait Tags */}
-                    <div className="flex flex-wrap gap-1.5 pt-2">
-                      <span className="bg-white/20 backdrop-blur-xs text-[11px] px-2.5 py-0.5 rounded-full capitalize font-medium">
-                        {currentStackDog.energyLevel.replace('_', ' ')} Energy
+                    {/* Trait Pills */}
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      <span className="bg-white/20 backdrop-blur-xs text-[10px] px-2 py-0.5 rounded-full capitalize font-medium">
+                        {currentStackDog.energyLevel.replace('_', ' ')}
                       </span>
-                      <span className="bg-white/20 backdrop-blur-xs text-[11px] px-2.5 py-0.5 rounded-full capitalize font-medium">
+                      <span className="bg-white/20 backdrop-blur-xs text-[10px] px-2 py-0.5 rounded-full capitalize font-medium">
                         {currentStackDog.size}
                       </span>
-                      {currentStackDog.temperament.slice(0, 2).map((t, i) => (
-                        <span
-                          key={i}
-                          className="bg-white/20 backdrop-blur-xs text-[11px] px-2.5 py-0.5 rounded-full font-medium"
-                        >
-                          {t}
+                      {currentStackDog.goodWith.cats && (
+                        <span className="bg-[#EDF4F0] text-[#183B2B] text-[10px] px-2 py-0.5 rounded-full font-bold">
+                          Cat-Safe
                         </span>
-                      ))}
+                      )}
+                      {currentStackDog.goodWith.children && (
+                        <span className="bg-[#EDF4F0] text-[#183B2B] text-[10px] px-2 py-0.5 rounded-full font-bold">
+                          Kid-Safe
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Card Quick Preview & Story */}
-                <div className="p-4 bg-[#FAF8F5] border-t border-[#E6DFD5] space-y-3">
-                  <p className="text-xs text-[#2D372E] line-clamp-2 leading-relaxed">
-                    {currentStackDog.backstory}
+                {/* Card Footer: Backstory snippet & modal trigger */}
+                <div className="p-3.5 bg-[#FAF7F2] border-t border-[#EAE4DC] flex items-center justify-between gap-2">
+                  <p className="text-xs text-[#58625B] line-clamp-1 italic flex-1">
+                    "{currentStackDog.backstory}"
                   </p>
-
                   <button
                     onClick={() => onOpenDogModal(currentStackDog)}
-                    className="w-full py-2 bg-white hover:bg-[#F4EFEA] text-[#1B4332] rounded-xl text-xs font-bold border border-[#D5CEBF] transition flex items-center justify-center space-x-1"
+                    className="px-3 py-1.5 bg-white hover:bg-[#F2ECE4] text-[#183B2B] rounded-xl text-xs font-bold border border-[#EAE4DC] transition flex items-center space-x-1 flex-shrink-0"
                   >
-                    <span>View Complete Profile & Compatibility</span>
-                    <ChevronRight className="w-4 h-4" />
+                    <span>Profile</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
-              {/* Swipe Action Control Bar */}
-              <div className="flex items-center justify-center space-x-6 pt-2">
+              {/* Action Controls Bar */}
+              <div className="flex items-center justify-center space-x-5 pt-1">
                 {/* Undo Button */}
                 <button
                   disabled={activeStackIndex === 0}
                   onClick={handleUndo}
-                  className={`w-12 h-12 rounded-full border border-[#D5CEBF] flex items-center justify-center transition shadow-xs ${
+                  className={`w-11 h-11 rounded-full border border-[#EAE4DC] flex items-center justify-center transition shadow-xs ${
                     activeStackIndex > 0
-                      ? 'bg-white text-[#5C675F] hover:bg-[#F4EFEA] hover:text-[#1B4332]'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      ? 'bg-white text-[#58625B] hover:text-[#181F1A] hover:bg-[#F2ECE4]'
+                      : 'bg-gray-100 text-gray-300 cursor-not-allowed border-transparent'
                   }`}
                   title="Undo last swipe"
                   aria-label="Undo last swipe"
                 >
-                  <RotateCcw className="w-5 h-5" />
+                  <RotateCcw className="w-4 h-4" />
                 </button>
 
-                {/* Pass Button */}
+                {/* Pass Button (✕) */}
                 <button
                   onClick={handlePass}
-                  className="w-16 h-16 rounded-full bg-white border-2 border-[#E6DFD5] text-[#8E9991] hover:text-[#BA5536] hover:border-[#BA5536] hover:scale-105 flex items-center justify-center transition shadow-sm"
+                  className="w-14 h-14 rounded-full bg-white border border-[#EAE4DC] text-[#8B958E] hover:text-[#B85438] hover:border-[#B85438] hover:scale-105 flex items-center justify-center transition shadow-sm"
                   title="Pass on this dog"
                   aria-label="Pass"
                 >
-                  <X className="w-7 h-7" />
+                  <X className="w-6 h-6" />
                 </button>
 
-                {/* Like / Save Button */}
+                {/* Full Details Modal Trigger */}
+                <button
+                  onClick={() => onOpenDogModal(currentStackDog)}
+                  className="w-11 h-11 rounded-full bg-white border border-[#EAE4DC] text-[#58625B] hover:text-[#183B2B] hover:border-[#183B2B] flex items-center justify-center transition shadow-xs"
+                  title="Read story and compatibility"
+                  aria-label="View details"
+                >
+                  <Info className="w-4 h-4" />
+                </button>
+
+                {/* Like / Save Button (♥) */}
                 <button
                   onClick={handleLike}
-                  className="w-16 h-16 rounded-full bg-[#1B4332] text-white hover:bg-[#2D6A4F] hover:scale-105 flex items-center justify-center transition shadow-md"
+                  className="w-14 h-14 rounded-full bg-[#183B2B] text-white hover:bg-[#24533E] hover:scale-105 flex items-center justify-center transition shadow-md"
                   title="Save and Like this dog"
                   aria-label="Save and Like"
                 >
-                  <Heart className="w-7 h-7 fill-white" />
+                  <Heart className="w-6 h-6 fill-white" />
                 </button>
+              </div>
+
+              {/* Deck Counter & Keyboard Tips */}
+              <div className="flex justify-between items-center text-[11px] text-[#8B958E] px-2 pt-0.5">
+                <span>
+                  Dog {activeStackIndex + 1} of {filteredDogs.length}
+                </span>
+                <span className="hidden sm:inline">
+                  Keyboard: ← Pass | → Like
+                </span>
               </div>
             </div>
           ) : (
             /* Empty State */
-            <div className="text-center py-16 px-4 bg-white rounded-3xl border border-[#E6DFD5] max-w-md w-full shadow-xs space-y-4">
-              <div className="w-20 h-20 rounded-full bg-[#EBF7EE] text-[#1B4332] flex items-center justify-center mx-auto">
-                <Sparkles className="w-10 h-10 text-[#2D6A4F]" />
+            <div className="text-center py-14 px-6 bg-white rounded-3xl border border-[#EAE4DC] max-w-sm w-full shadow-xs space-y-3">
+              <div className="w-16 h-16 rounded-full bg-[#EDF4F0] text-[#183B2B] flex items-center justify-center mx-auto">
+                <Sparkles className="w-8 h-8 text-[#357457]" />
               </div>
-              <h3 className="text-2xl font-bold font-serif-heading text-[#1B4332]">
-                All Caught Up!
+              <h3 className="text-xl font-bold font-serif-heading text-[#181F1A]">
+                Deck Reviewed!
               </h3>
-              <p className="text-sm text-[#5C675F] max-w-sm mx-auto">
-                You've browsed through all available dogs matching your current filter criteria.
+              <p className="text-xs text-[#58625B] max-w-xs mx-auto">
+                You've reviewed all available dogs under current filters.
               </p>
               <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
                 <button
                   onClick={handleResetStack}
-                  className="px-5 py-2.5 rounded-xl bg-[#1B4332] text-white text-xs font-bold hover:bg-[#2D6A4F] transition shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-[#183B2B] text-white text-xs font-bold hover:bg-[#24533E] transition shadow-xs"
                 >
-                  Restart Card Stack
+                  Restart Deck
                 </button>
                 <button
                   onClick={() => setViewMode('grid')}
-                  className="px-5 py-2.5 rounded-xl bg-white border border-[#D5CEBF] text-[#1B4332] text-xs font-bold hover:bg-[#FAF8F5] transition"
+                  className="px-4 py-2 rounded-xl bg-white border border-[#EAE4DC] text-[#181F1A] text-xs font-bold hover:bg-[#FAF7F2] transition"
                 >
-                  Browse Grid View
+                  View Grid Mode
                 </button>
               </div>
             </div>
           )}
         </div>
       ) : (
-        /* VIEW MODE 2: BROWSE GRID */
+        /* VIEW 2: BROWSE GRID VIEW */
         <div className="space-y-4">
           {filteredDogs.length === 0 ? (
-            <div className="text-center py-16 px-4 bg-white rounded-2xl border border-[#E6DFD5]">
-              <p className="text-base font-semibold text-[#1C241E]">No matching dogs found</p>
-              <p className="text-xs text-[#5C675F] mt-1">
+            <div className="text-center py-16 px-4 bg-white rounded-2xl border border-[#EAE4DC]">
+              <p className="text-sm font-semibold text-[#181F1A]">No matching dogs found</p>
+              <p className="text-xs text-[#58625B] mt-0.5">
                 Try loosening your filter parameters or search term.
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredDogs.map((dog) => {
                 const match = calculateCompatibility(adopterPreferences, dog);
                 const isSaved = savedDogIds.includes(dog.id);
@@ -503,84 +527,96 @@ export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
                 return (
                   <div
                     key={dog.id}
-                    className="bg-white rounded-2xl border border-[#E6DFD5] overflow-hidden shadow-xs hover:shadow-md hover:border-[#1B4332] transition group flex flex-col"
+                    className="bg-white rounded-2xl border border-[#EAE4DC] overflow-hidden shadow-xs hover:shadow-md hover:border-[#183B2B] transition group flex flex-col justify-between"
                   >
-                    {/* Dog Image */}
-                    <div className="relative aspect-4/3 w-full bg-[#E6DFD5] overflow-hidden">
-                      <img
-                        src={dog.photos[0]}
-                        alt={dog.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                      />
-                      <div className="absolute top-3 left-3">
-                        <span
-                          className={`text-xs font-bold px-2.5 py-0.5 rounded-full shadow-xs ${
-                            match.hardConstraintFailed
-                              ? 'bg-[#BA5536] text-white'
-                              : match.score >= 80
-                              ? 'bg-[#1B4332] text-white'
-                              : 'bg-white/95 text-[#1C241E]'
-                          }`}
+                    <div>
+                      {/* Image Frame */}
+                      <div className="relative h-52 w-full bg-[#EAE4DC] overflow-hidden">
+                        <img
+                          src={dog.photos[0]}
+                          alt={dog.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                        />
+
+                        {/* Top Badges */}
+                        <div className="absolute top-2.5 left-2.5">
+                          <span
+                            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-xs ${
+                              match.hardConstraintFailed
+                                ? 'bg-[#B85438] text-white'
+                                : match.score >= 80
+                                ? 'bg-[#183B2B] text-white'
+                                : 'bg-white/95 text-[#181F1A]'
+                            }`}
+                          >
+                            {match.score}% Match
+                          </span>
+                        </div>
+
+                        {/* Favorite Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleSaveDog(dog.id);
+                          }}
+                          className="absolute top-2.5 right-2.5 p-2 rounded-full bg-white/90 backdrop-blur-xs text-[#B85438] hover:scale-110 transition shadow-xs"
+                          title={isSaved ? 'Remove from saved' : 'Save dog'}
+                          aria-label="Save dog"
                         >
-                          {match.score}% Match
-                        </span>
+                          <Heart className="w-3.5 h-3.5" fill={isSaved ? '#B85438' : 'none'} />
+                        </button>
+
+                        {/* Shelter Tag */}
+                        <div className="absolute bottom-2 left-2.5 right-2.5 text-white text-[10px] bg-black/60 backdrop-blur-xs rounded-md px-2 py-0.5 inline-block truncate">
+                          {dog.shelterName || 'Shelter Partner'}
+                        </div>
                       </div>
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleSaveDog(dog.id);
-                        }}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-xs text-[#BA5536] hover:scale-110 transition shadow-xs"
-                        title={isSaved ? 'Remove from saved' : 'Save dog'}
-                        aria-label="Save dog"
-                      >
-                        <Heart className="w-4 h-4" fill={isSaved ? '#BA5536' : 'none'} />
-                      </button>
-
-                      <div className="absolute bottom-2 left-3 right-3 text-white text-[11px] bg-black/50 backdrop-blur-xs rounded-md px-2 py-0.5 inline-block truncate">
-                        {dog.shelterName || 'Shelter Partner'}
-                      </div>
-                    </div>
-
-                    {/* Card Content */}
-                    <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                      <div>
+                      {/* Content */}
+                      <div className="p-4 space-y-2">
                         <div className="flex items-baseline justify-between">
-                          <h3 className="font-bold text-lg font-serif-heading text-[#1C241E]">
+                          <h3 className="font-bold text-lg font-serif-heading text-[#181F1A]">
                             {dog.name}
                           </h3>
-                          <span className="text-xs text-[#5C675F]">{dog.ageYears} yrs</span>
+                          <span className="text-xs text-[#58625B] font-medium">
+                            {dog.ageYears} yrs • ${dog.adoptionFee}
+                          </span>
                         </div>
-                        <p className="text-xs text-[#5C675F] truncate">{dog.breed}</p>
+                        <p className="text-xs text-[#58625B] truncate">{dog.breed}</p>
 
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF8F5] border border-[#E6DFD5] text-[#1C241E] capitalize">
+                        <div className="flex flex-wrap gap-1 pt-1 text-[10px]">
+                          <span className="px-2 py-0.5 rounded-full bg-[#FAF7F2] border border-[#EAE4DC] text-[#181F1A] capitalize">
                             {dog.size}
                           </span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FAF8F5] border border-[#E6DFD5] text-[#1C241E] capitalize">
+                          <span className="px-2 py-0.5 rounded-full bg-[#FAF7F2] border border-[#EAE4DC] text-[#181F1A] capitalize">
                             {dog.energyLevel.replace('_', ' ')}
                           </span>
                           {dog.goodWith.cats && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EBF7EE] text-[#1B4332]">
+                            <span className="px-2 py-0.5 rounded-full bg-[#EDF4F0] text-[#183B2B] font-semibold">
                               Cat-safe
+                            </span>
+                          )}
+                          {dog.goodWith.children && (
+                            <span className="px-2 py-0.5 rounded-full bg-[#EDF4F0] text-[#183B2B] font-semibold">
+                              Kid-safe
                             </span>
                           )}
                         </div>
                       </div>
+                    </div>
 
-                      <div className="pt-2 border-t border-[#F4EFEA] flex items-center justify-between">
-                        <span className="text-xs font-semibold text-[#1B4332]">
-                          ${dog.adoptionFee} fee
-                        </span>
-                        <button
-                          onClick={() => onOpenDogModal(dog)}
-                          className="text-xs font-bold text-[#1B4332] hover:text-[#2D6A4F] flex items-center space-x-1"
-                        >
-                          <span>Full Profile</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                    {/* Action Bar */}
+                    <div className="px-4 py-3 border-t border-[#F2ECE4] bg-[#FAF7F2]/50 flex items-center justify-between text-xs">
+                      <span className="text-[#8B958E] text-[11px] truncate max-w-[150px]">
+                        {dog.location}
+                      </span>
+                      <button
+                        onClick={() => onOpenDogModal(dog)}
+                        className="font-bold text-[#183B2B] hover:text-[#24533E] flex items-center space-x-1"
+                      >
+                        <span>Full Profile</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 );

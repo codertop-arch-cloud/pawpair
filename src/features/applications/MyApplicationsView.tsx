@@ -10,7 +10,8 @@ import {
   Calendar,
   MessageSquare,
   ShieldCheck,
-  ExternalLink,
+  User,
+  Home,
 } from 'lucide-react';
 import { AdoptionApplication, UserProfile, ApplicationStatus } from '../../types';
 import { dataStore } from '../../services/dataService';
@@ -28,15 +29,16 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
   onRefreshApplications,
   onNavigateToDiscover,
 }) => {
-  const [selectedAppId, setSelectedAppId] = useState<string | null>(
-    applications[0]?.id || null
-  );
-
   const userApplications = applications.filter(
     (app) => app.adopterId === currentUser.id || currentUser.role === 'shelter_staff'
   );
 
-  const selectedApp = userApplications.find((a) => a.id === selectedAppId) || userApplications[0];
+  const [selectedAppId, setSelectedAppId] = useState<string | null>(
+    userApplications[0]?.id || null
+  );
+
+  const selectedApp =
+    userApplications.find((a) => a.id === selectedAppId) || userApplications[0];
 
   const handleWithdraw = (appId: string) => {
     if (window.confirm('Are you sure you wish to withdraw this adoption application?')) {
@@ -55,37 +57,37 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
       case 'submitted':
         return {
           bg: 'bg-blue-50 text-blue-700 border-blue-200',
-          label: 'Submitted — In Shelter Queue',
+          label: 'Submitted — In Queue',
           icon: Clock,
         };
       case 'under_review':
         return {
           bg: 'bg-amber-50 text-amber-800 border-amber-200',
-          label: 'Under Shelter Review',
+          label: 'Under Review',
           icon: Clock,
         };
       case 'more_info_requested':
         return {
           bg: 'bg-orange-50 text-orange-800 border-orange-200',
-          label: 'More Information Requested',
+          label: 'More Info Requested',
           icon: AlertCircle,
         };
       case 'approved':
         return {
-          bg: 'bg-[#EBF7EE] text-[#1B4332] border-[#D8F3DC]',
+          bg: 'bg-[#EDF4F0] text-[#183B2B] border-[#D8F3DC]',
           label: 'Approved for Meet & Greet',
           icon: CheckCircle2,
         };
       case 'rejected':
         return {
           bg: 'bg-gray-100 text-gray-700 border-gray-200',
-          label: 'Not Selected / Closed',
+          label: 'Not Selected',
           icon: XCircle,
         };
       case 'withdrawn':
         return {
           bg: 'bg-stone-100 text-stone-600 border-stone-200',
-          label: 'Withdrawn by Applicant',
+          label: 'Withdrawn',
           icon: XCircle,
         };
       default:
@@ -98,46 +100,55 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-6">
       {/* Header */}
-      <div className="pb-4 border-b border-[#E6DFD5]">
-        <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#EBF7EE] text-[#1B4332] text-xs font-semibold mb-2">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#2D6A4F]" />
-          <span>Transparent Adoption Lifecycle</span>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-[#EAE4DC]">
+        <div>
+          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-[#EDF4F0] text-[#183B2B] text-[11px] font-semibold mb-1.5">
+            <ShieldCheck className="w-3 h-3 text-[#357457]" />
+            <span>Adoption Pipeline Tracker</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold font-serif-heading text-[#181F1A] tracking-tight">
+            Adoption Applications
+          </h1>
+          <p className="text-xs sm:text-sm text-[#58625B] max-w-xl mt-0.5">
+            Review status updates, shelter coordinator messages, and chronological milestone logs.
+          </p>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold font-serif-heading text-[#1B4332] tracking-tight">
-          Adoption Applications
-        </h1>
-        <p className="text-sm text-[#5C675F] max-w-2xl mt-1">
-          Track the live review status, coordinator notes, and decision milestones for your adoption requests.
-        </p>
+
+        <button
+          onClick={onNavigateToDiscover}
+          className="text-xs font-semibold text-[#183B2B] hover:underline self-start sm:self-auto"
+        >
+          + Apply for Another Dog
+        </button>
       </div>
 
       {userApplications.length === 0 ? (
-        <div className="text-center py-20 px-4 bg-white rounded-3xl border border-[#E6DFD5] shadow-xs max-w-md mx-auto space-y-4">
-          <div className="w-16 h-16 rounded-full bg-[#FAF8F5] text-[#5C675F] flex items-center justify-center mx-auto border border-[#E6DFD5]">
-            <FileText className="w-8 h-8 text-[#1B4332]" />
+        <div className="text-center py-16 px-6 bg-white rounded-3xl border border-[#EAE4DC] max-w-sm mx-auto space-y-3 shadow-xs">
+          <div className="w-14 h-14 rounded-full bg-[#FAF7F2] text-[#58625B] flex items-center justify-center mx-auto border border-[#EAE4DC]">
+            <FileText className="w-7 h-7 text-[#183B2B]" />
           </div>
-          <h2 className="text-xl font-bold font-serif-heading text-[#1B4332]">
-            No Applications on File
+          <h2 className="text-xl font-bold font-serif-heading text-[#181F1A]">
+            No Applications Yet
           </h2>
-          <p className="text-xs text-[#5C675F] max-w-xs mx-auto">
-            You haven't submitted any adoption applications yet. Explore our available dogs and apply when you find the right match!
+          <p className="text-xs text-[#58625B] max-w-xs mx-auto">
+            You haven't submitted any adoption applications yet. Explore available rescue dogs to begin.
           </p>
           <button
             onClick={onNavigateToDiscover}
-            className="px-6 py-2.5 bg-[#1B4332] hover:bg-[#2D6A4F] text-white text-xs font-bold rounded-xl transition shadow-xs"
+            className="px-5 py-2.5 bg-[#183B2B] hover:bg-[#24533E] text-white text-xs font-bold rounded-xl transition shadow-xs"
           >
-            Discover Available Dogs
+            Browse Dogs
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column: Application Cards List */}
-          <div className="lg:col-span-5 space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#8E9991] px-1">
-              Your Submissions ({userApplications.length})
-            </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Master List Column */}
+          <div className="lg:col-span-5 space-y-2.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#8B958E] px-1 block">
+              Applications ({userApplications.length})
+            </span>
 
             {userApplications.map((app) => {
               const badge = getStatusBadge(app.status);
@@ -148,33 +159,34 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
                 <div
                   key={app.id}
                   onClick={() => setSelectedAppId(app.id)}
-                  className={`p-4 rounded-2xl border transition cursor-pointer flex space-x-3 items-center ${
+                  className={`p-3.5 rounded-2xl border transition cursor-pointer flex space-x-3 items-center ${
                     isSelected
-                      ? 'bg-white border-[#1B4332] shadow-md ring-2 ring-[#1B4332]/10'
-                      : 'bg-white border-[#E6DFD5] hover:border-[#D5CEBF] shadow-xs'
+                      ? 'bg-white border-[#183B2B] shadow-sm ring-2 ring-[#183B2B]/10'
+                      : 'bg-white border-[#EAE4DC] hover:border-[#D5CEBF]'
                   }`}
                 >
                   <img
                     src={app.dogPhoto}
                     alt={app.dogName}
-                    className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                    className="w-14 h-14 rounded-xl object-cover flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-base font-serif-heading text-[#1C241E] truncate">
+                      <h3 className="font-bold text-sm font-serif-heading text-[#181F1A] truncate">
                         {app.dogName}
                       </h3>
-                      <ChevronRight className="w-4 h-4 text-[#8E9991]" />
+                      <ChevronRight className={`w-3.5 h-3.5 ${isSelected ? 'text-[#183B2B]' : 'text-[#8B958E]'}`} />
                     </div>
-                    <p className="text-xs text-[#5C675F] truncate">{app.shelterName}</p>
-                    <div className="mt-2 flex items-center justify-between">
+                    <p className="text-xs text-[#58625B] truncate">{app.shelterName}</p>
+
+                    <div className="mt-1.5 flex items-center justify-between">
                       <span
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border flex items-center space-x-1 ${badge.bg}`}
                       >
                         <BadgeIcon className="w-3 h-3" />
                         <span>{badge.label}</span>
                       </span>
-                      <span className="text-[11px] text-[#8E9991]">
+                      <span className="text-[10px] text-[#8B958E]">
                         {new Date(app.createdAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -184,23 +196,23 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
             })}
           </div>
 
-          {/* Right Column: Detailed Timeline & Application Review */}
+          {/* Detail View Column */}
           <div className="lg:col-span-7">
             {selectedApp && (
-              <div className="bg-white rounded-2xl border border-[#E6DFD5] p-6 shadow-xs space-y-6">
-                {/* Header Info */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F4EFEA] gap-3">
+              <div className="bg-white rounded-3xl border border-[#EAE4DC] p-5 sm:p-6 shadow-xs space-y-6">
+                {/* Header Summary */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F2ECE4] gap-3">
                   <div className="flex items-center space-x-3">
                     <img
                       src={selectedApp.dogPhoto}
                       alt={selectedApp.dogName}
-                      className="w-14 h-14 rounded-xl object-cover"
+                      className="w-14 h-14 rounded-2xl object-cover"
                     />
                     <div>
-                      <h2 className="text-xl font-bold font-serif-heading text-[#1B4332]">
-                        Application for {selectedApp.dogName}
+                      <h2 className="text-xl font-bold font-serif-heading text-[#181F1A]">
+                        {selectedApp.dogName}
                       </h2>
-                      <p className="text-xs text-[#5C675F]">
+                      <p className="text-xs text-[#58625B]">
                         Submitted {new Date(selectedApp.createdAt).toLocaleDateString()} by{' '}
                         {selectedApp.applicantName}
                       </p>
@@ -212,67 +224,61 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
                     const Icon = badge.icon;
                     return (
                       <span
-                        className={`text-xs font-bold px-3 py-1.5 rounded-full border self-start sm:self-auto flex items-center space-x-1.5 ${badge.bg}`}
+                        className={`text-xs font-bold px-3 py-1 rounded-full border self-start sm:self-auto flex items-center space-x-1.5 ${badge.bg}`}
                       >
-                        <Icon className="w-4 h-4" />
+                        <Icon className="w-3.5 h-3.5" />
                         <span>{badge.label}</span>
                       </span>
                     );
                   })()}
                 </div>
 
-                {/* Shelter Coordinator Notes */}
+                {/* Coordinator Note if present */}
                 {selectedApp.shelterNotes && (
-                  <div className="bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl p-4 space-y-1">
-                    <span className="text-xs font-bold text-[#1B4332] flex items-center space-x-1.5">
-                      <MessageSquare className="w-4 h-4 text-[#2D6A4F]" />
-                      <span>Latest Shelter Coordinator Update</span>
+                  <div className="bg-[#EDF4F0]/70 border border-[#D8F3DC] rounded-2xl p-4 space-y-1">
+                    <span className="text-xs font-bold text-[#183B2B] flex items-center space-x-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-[#357457]" />
+                      <span>Shelter Coordinator Update</span>
                     </span>
-                    <p className="text-xs text-[#2D372E] leading-relaxed">
+                    <p className="text-xs text-[#24533E] leading-relaxed">
                       {selectedApp.shelterNotes}
                     </p>
                   </div>
                 )}
 
-                {/* Status Timeline Stepper */}
+                {/* Clean Timeline Stepper */}
                 <div className="space-y-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#8E9991]">
-                    Application Lifecycle Timeline
-                  </h3>
-                  <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#E6DFD5]">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#8B958E] block">
+                    Audit & Review Timeline
+                  </span>
+
+                  <div className="space-y-3 relative pl-5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#EAE4DC]">
                     {selectedApp.timeline.map((event, idx) => {
                       const isLatest = idx === selectedApp.timeline.length - 1;
                       return (
-                        <div key={idx} className="relative group">
-                          {/* Dot */}
+                        <div key={idx} className="relative">
                           <div
-                            className={`absolute -left-6 top-1 w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center ${
-                              isLatest
-                                ? 'border-[#1B4332] ring-4 ring-[#D8F3DC]'
-                                : 'border-[#8E9991]'
+                            className={`absolute -left-5 top-1 w-3.5 h-3.5 rounded-full border-2 bg-white ${
+                              isLatest ? 'border-[#183B2B] bg-[#183B2B]' : 'border-[#8B958E]'
                             }`}
-                          >
-                            <div
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                isLatest ? 'bg-[#1B4332]' : 'bg-[#8E9991]'
-                              }`}
-                            />
-                          </div>
-
-                          <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#F4EFEA] space-y-1 text-xs">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-[#1C241E] capitalize">
+                          />
+                          <div className="bg-[#FAF7F2] p-3 rounded-xl border border-[#F2ECE4] space-y-0.5 text-xs">
+                            <div className="flex justify-between items-baseline">
+                              <span className="font-bold text-[#181F1A] capitalize">
                                 {event.status.replace(/_/g, ' ')}
                               </span>
-                              <span className="text-[10px] text-[#8E9991]">
-                                {new Date(event.timestamp).toLocaleString()}
+                              <span className="text-[10px] text-[#8B958E]">
+                                {new Date(event.timestamp).toLocaleString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
                               </span>
                             </div>
-                            <p className="text-[#5C675F] text-xs">
-                              {event.note || 'Milestone updated.'}
-                            </p>
-                            <span className="text-[10px] text-[#8E9991] block italic">
-                              Logged by {event.actorName}
+                            <p className="text-[#58625B] text-xs">{event.note}</p>
+                            <span className="text-[10px] text-[#8B958E] italic block">
+                              Recorded by {event.actorName}
                             </span>
                           </div>
                         </div>
@@ -281,50 +287,42 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
                   </div>
                 </div>
 
-                {/* Submitted Application Details Summary */}
-                <div className="bg-white rounded-xl border border-[#E6DFD5] p-4 space-y-3 text-xs">
-                  <h4 className="font-bold text-[#1B4332] text-xs uppercase tracking-wider">
-                    Application Summary
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[#5C675F]">
+                {/* Application Details Grid */}
+                <div className="bg-[#FAF7F2] rounded-2xl p-4 border border-[#EAE4DC] space-y-2 text-xs">
+                  <span className="font-bold text-[#181F1A] text-xs uppercase tracking-wider block">
+                    Application Details On File
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[#58625B]">
                     <div>
-                      <span className="font-semibold text-[#1C241E]">Applicant:</span>{' '}
-                      {selectedApp.applicantName} ({selectedApp.applicantPhone})
+                      <span className="font-semibold text-[#181F1A]">Contact:</span> {selectedApp.applicantPhone}
                     </div>
                     <div>
-                      <span className="font-semibold text-[#1C241E]">Housing:</span>{' '}
-                      {selectedApp.housingType.replace('_', ' ')} (
-                      {selectedApp.hasYard ? 'Fenced Yard' : 'No Yard'})
+                      <span className="font-semibold text-[#181F1A]">Housing:</span>{' '}
+                      {selectedApp.housingType.replace('_', ' ')} ({selectedApp.hasYard ? 'Fenced Yard' : 'No Yard'})
                     </div>
                     <div>
-                      <span className="font-semibold text-[#1C241E]">Hours Alone:</span>{' '}
-                      {selectedApp.hoursAlonePerDay} hrs / day
+                      <span className="font-semibold text-[#181F1A]">Alone Time:</span> {selectedApp.hoursAlonePerDay} hrs / day
                     </div>
                     <div>
-                      <span className="font-semibold text-[#1C241E]">Vet Reference:</span>{' '}
-                      {selectedApp.vetReference?.clinicName || 'None listed'}
+                      <span className="font-semibold text-[#181F1A]">Vet Ref:</span>{' '}
+                      {selectedApp.vetReference?.clinicName || 'None'}
                     </div>
                   </div>
-
-                  <div className="pt-2 border-t border-[#F4EFEA]">
-                    <span className="font-semibold text-[#1C241E] block mb-0.5">
-                      Adoption Motivation:
-                    </span>
-                    <p className="text-[#5C675F] italic">"{selectedApp.reasonForAdopting}"</p>
+                  <div className="pt-1 text-[#58625B]">
+                    <span className="font-semibold text-[#181F1A]">Motivation:</span>{' '}
+                    <span className="italic">"{selectedApp.reasonForAdopting}"</span>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between pt-2 border-t border-[#F4EFEA]">
-                  <span className="text-xs text-[#8E9991]">
-                    Application ID: {selectedApp.id}
+                <div className="flex items-center justify-between pt-2 border-t border-[#F2ECE4]">
+                  <span className="text-[10px] text-[#8B958E]">
+                    ID: {selectedApp.id}
                   </span>
-
                   {selectedApp.status !== 'withdrawn' && selectedApp.status !== 'rejected' && (
                     <button
                       onClick={() => handleWithdraw(selectedApp.id)}
-                      className="text-xs font-semibold text-[#BA5536] hover:underline"
+                      className="text-xs font-semibold text-[#B85438] hover:underline"
                     >
                       Withdraw Application
                     </button>

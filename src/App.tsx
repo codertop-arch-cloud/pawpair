@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { SavedDogsDrawer } from './components/SavedDogsDrawer';
 import { DogDiscoveryView } from './features/discovery/DogDiscoveryView';
@@ -17,7 +17,7 @@ import {
   ShelterVisit,
   AdopterLifestylePreferences,
 } from './types';
-import { Heart, ShieldCheck, Sparkles, Building2, ExternalLink } from 'lucide-react';
+import { Sparkles, ShieldCheck, Building2 } from 'lucide-react';
 
 export function App() {
   // Navigation & current view
@@ -82,7 +82,7 @@ export function App() {
     setSavedDogIds(dataStore.getSavedDogIds(currentUser.id));
     const target = dataStore.getDogById(dogId);
     const dogName = target ? target.name : 'Dog';
-    showToast(isNowSaved ? `Saved ${dogName} to favorites!` : `Removed ${dogName} from favorites`);
+    showToast(isNowSaved ? `Saved ${dogName} to favorites` : `Removed ${dogName} from favorites`);
   };
 
   // Reset demo data
@@ -119,11 +119,11 @@ export function App() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-[#1C241E] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#FAF7F2] text-[#181F1A] flex flex-col font-sans selection:bg-[#EDF4F0] selection:text-[#183B2B]">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#1B4332] text-white px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2.5 text-xs font-semibold animate-in slide-in-from-bottom duration-200 border border-[#2D6A4F]">
-          <Sparkles className="w-4 h-4 text-[#52B788]" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#183B2B] text-white px-4 py-2.5 rounded-2xl shadow-xl flex items-center space-x-2 text-xs font-semibold animate-in slide-in-from-bottom duration-200 border border-[#24533E]">
+          <Sparkles className="w-3.5 h-3.5 text-[#EDF4F0]" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -232,75 +232,42 @@ export function App() {
         onRemoveSavedDog={handleToggleSaveDog}
       />
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-[#E6DFD5] py-12 px-4 sm:px-6 lg:px-8 mt-16 text-xs text-[#5C675F]">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div className="space-y-3 md:col-span-2">
+      {/* Editorial Footer */}
+      <footer className="bg-white border-t border-[#EAE4DC] py-10 px-4 sm:px-6 lg:px-8 mt-16 text-xs text-[#58625B]">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="space-y-1.5">
             <div className="flex items-center space-x-2">
-              <span className="text-xl">🐾</span>
-              <span className="font-bold font-serif-heading text-lg text-[#1B4332]">PawPair</span>
+              <span className="text-lg">🐾</span>
+              <span className="font-bold font-serif-heading text-base text-[#183B2B]">PawPair</span>
+              <span className="text-[11px] text-[#8B958E]">• Ethical Dog Adoption & Shelter Discovery</span>
             </div>
-            <p className="max-w-md leading-relaxed text-[#2D372E]">
-              PawPair is an ethical, welfare-first discovery platform connecting prospective adopters with shelter dogs through explainable lifestyle compatibility and coordinated shelter visits.
+            <p className="text-xs text-[#58625B] max-w-lg leading-relaxed">
+              Transparent, personality-first companion discovery connecting prospective adopters with shelter rescues through explainable lifestyle compatibility and verified group visits.
             </p>
-            <div className="flex items-center space-x-4 pt-1 text-[#2D6A4F] font-semibold">
-              <span className="flex items-center space-x-1">
-                <ShieldCheck className="w-4 h-4 text-[#52B788]" />
-                <span>Deterministic Scoring</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <Building2 className="w-4 h-4 text-[#52B788]" />
-                <span>Shelter-Verified Placement</span>
-              </span>
-            </div>
           </div>
 
-          <div>
-            <h4 className="font-bold text-[#1C241E] uppercase tracking-wider mb-2 font-serif-heading">
-              Platform Workflows
-            </h4>
-            <ul className="space-y-1.5">
-              <li>
-                <button onClick={() => setCurrentTab('discover')} className="hover:text-[#1B4332]">
-                  Dog Discovery & Swiping
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setCurrentTab('matching')} className="hover:text-[#1B4332]">
-                  Lifestyle Compatibility Engine
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setCurrentTab('applications')} className="hover:text-[#1B4332]">
-                  Adoption Application Tracker
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setCurrentTab('visits')} className="hover:text-[#1B4332]">
-                  Group Shelter Visits
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setCurrentTab('shelter')} className="hover:text-[#1B4332]">
-                  Shelter Staff Portal
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-[#1C241E] uppercase tracking-wider mb-2 font-serif-heading">
-              Demonstration & Ethics
-            </h4>
-            <p className="text-[11px] leading-relaxed text-[#8E9991]">
-              Demonstration prototype with browser persistence. Profiles represent rescue scenarios with real Unsplash dog photography. No real shelter affiliations or live multi-user authentication are fabricated.
-            </p>
+          <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-[#183B2B]">
+            <button onClick={() => setCurrentTab('discover')} className="hover:underline">
+              Discover
+            </button>
+            <button onClick={() => setCurrentTab('matching')} className="hover:underline">
+              Lifestyle Match
+            </button>
+            <button onClick={() => setCurrentTab('applications')} className="hover:underline">
+              Applications
+            </button>
+            <button onClick={() => setCurrentTab('visits')} className="hover:underline">
+              Group Visits
+            </button>
+            <button onClick={() => setCurrentTab('shelter')} className="hover:underline">
+              Shelter Portal
+            </button>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto pt-6 border-t border-[#F4EFEA] flex flex-col sm:flex-row items-center justify-between gap-2 text-[#8E9991]">
-          <span>© 2026 PawPair Platform. Built for end-term software engineering submission.</span>
-          <span>Designed with warm editorial aesthetics & animal welfare priority.</span>
+        <div className="max-w-6xl mx-auto pt-6 mt-6 border-t border-[#F2ECE4] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#8B958E]">
+          <span>© 2026 PawPair Platform. Built for end-term software engineering evaluation.</span>
+          <span>Warm editorial aesthetics • Animal welfare priority</span>
         </div>
       </footer>
     </div>
