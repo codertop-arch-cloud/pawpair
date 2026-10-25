@@ -489,7 +489,7 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {shelterVisits.map((visit) => {
-              const participants = dataStore.getVisitParticipants(visit.id);
+              const participants = dataStore.getVisitParticipants(visit.id, currentUser);
 
               return (
                 <div

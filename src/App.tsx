@@ -17,7 +17,7 @@ import {
   ShelterVisit,
   AdopterLifestylePreferences,
 } from './types';
-import { Sparkles, ShieldCheck, Building2 } from 'lucide-react';
+import { Sparkles, ShieldCheck, Building2, X } from 'lucide-react';
 
 export function App() {
   // Navigation & current view
@@ -122,9 +122,16 @@ export function App() {
     <div className="min-h-screen bg-[#FAF7F2] text-[#181F1A] flex flex-col font-sans selection:bg-[#EDF4F0] selection:text-[#183B2B]">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#183B2B] text-white px-4 py-2.5 rounded-2xl shadow-xl flex items-center space-x-2 text-xs font-semibold animate-in slide-in-from-bottom duration-200 border border-[#24533E]">
-          <Sparkles className="w-3.5 h-3.5 text-[#EDF4F0]" />
-          <span>{toastMessage}</span>
+        <div className="fixed bottom-6 right-6 z-50 bg-[#183B2B] text-white pl-4 pr-3 py-2.5 rounded-2xl shadow-xl flex items-center space-x-2.5 text-xs font-semibold animate-in slide-in-from-bottom duration-200 border border-[#24533E] max-w-sm">
+          <Sparkles className="w-4 h-4 text-[#EDF4F0] flex-shrink-0" />
+          <span className="flex-1">{toastMessage}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="p-1 hover:bg-white/10 rounded-lg transition ml-1 text-white/80 hover:text-white"
+            aria-label="Dismiss notification"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 

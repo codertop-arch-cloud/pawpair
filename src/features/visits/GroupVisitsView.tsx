@@ -105,9 +105,9 @@ export const GroupVisitsView: React.FC<GroupVisitsViewProps> = ({
 
       {/* Visits List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {activeVisits.map((visit) => {
-          const participants = dataStore.getVisitParticipants(visit.id);
-          const isUserRegistered = participants.some((p) => p.userId === currentUser.id);
+        {visits.map((visit) => {
+          const isUserRegistered = dataStore.isUserRegisteredForVisit(visit.id, currentUser.id);
+          const isCancelled = visit.status === 'cancelled';
           const isFull = visit.participantCount >= visit.capacity;
           const spotsRemaining = Math.max(0, visit.capacity - visit.participantCount);
           const percentFilled = Math.min(100, Math.round((visit.participantCount / visit.capacity) * 100));
@@ -123,6 +123,8 @@ export const GroupVisitsView: React.FC<GroupVisitsViewProps> = ({
               className={`bg-white rounded-3xl border p-5 shadow-xs flex flex-col justify-between space-y-4 transition ${
                 isUserRegistered
                   ? 'border-[#183B2B] ring-2 ring-[#183B2B]/10'
+                  : isCancelled
+                  ? 'border-gray-200 bg-gray-50/50 opacity-80'
                   : 'border-[#EAE4DC] hover:border-[#D5CEBF] hover:shadow-sm'
               }`}
             >
@@ -130,7 +132,7 @@ export const GroupVisitsView: React.FC<GroupVisitsViewProps> = ({
                 {/* Date Badge & Shelter Badge */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-2xl bg-[#FAF7F2] border border-[#EAE4DC] flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-[#FAF7F2] border border-[#EAE4DC] flex flex-col items-center justify-center text-center flex-shrink-0">
                       <span className="text-[10px] uppercase font-bold text-[#B85438] tracking-wider leading-none">
                         {monthStr}
                       </span>
@@ -149,17 +151,22 @@ export const GroupVisitsView: React.FC<GroupVisitsViewProps> = ({
                     </div>
                   </div>
 
-                  {isUserRegistered ? (
-                    <span className="text-[10px] font-bold text-[#183B2B] bg-[#EDF4F0] px-2 py-0.5 rounded-full flex items-center space-x-1 border border-[#D8F3DC]">
+                  {/* Status Badge */}
+                  {isCancelled ? (
+                    <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full border border-gray-200">
+                      Cancelled
+                    </span>
+                  ) : isUserRegistered ? (
+                    <span className="text-[10px] font-bold text-[#183B2B] bg-[#EDF4F0] px-2.5 py-0.5 rounded-full flex items-center space-x-1 border border-[#D8F3DC]">
                       <UserCheck className="w-3 h-3 text-[#357457]" />
                       <span>Going</span>
                     </span>
                   ) : isFull ? (
-                    <span className="text-[10px] font-bold text-[#B85438] bg-[#FAF0EC] px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold text-[#B85438] bg-[#FAF0EC] px-2.5 py-0.5 rounded-full border border-[#FCE8E2]">
                       Full
                     </span>
                   ) : (
-                    <span className="text-[10px] font-semibold text-[#357457] bg-[#EDF4F0] px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-semibold text-[#357457] bg-[#EDF4F0] px-2.5 py-0.5 rounded-full border border-[#D8F3DC]">
                       {spotsRemaining} {spotsRemaining === 1 ? 'spot' : 'spots'} left
                     </span>
                   )}
@@ -181,47 +188,42 @@ export const GroupVisitsView: React.FC<GroupVisitsViewProps> = ({
                   <span className="truncate">{visit.shelterAddress}</span>
                 </div>
 
-                {/* Capacity Progress Bar */}
-                <div className="space-y-1 pt-1 border-t border-[#F2ECE4]">
+                {/* Capacity Progress Bar & Aggregate Count (Names strictly hidden for privacy) */}
+                <div className="space-y-1.5 pt-2 border-t border-[#F2ECE4]">
                   <div className="flex justify-between text-[11px] text-[#58625B]">
-                    <span>Registered Attendees</span>
+                    <span>Capacity Status</span>
                     <span className="font-bold text-[#181F1A]">
-                      {visit.participantCount} / {visit.capacity}
+                      {visit.participantCount} / {visit.capacity} Attendees ({spotsRemaining} remaining)
                     </span>
                   </div>
                   <div className="w-full bg-[#EAE4DC] h-1.5 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
-                        isFull ? 'bg-[#B85438]' : 'bg-[#183B2B]'
+                        isCancelled
+                          ? 'bg-gray-300'
+                          : isFull
+                          ? 'bg-[#B85438]'
+                          : 'bg-[#183B2B]'
                       }`}
                       style={{ width: `${percentFilled}%` }}
                     />
                   </div>
                 </div>
-
-                {/* Attendees (Names Only) */}
-                {participants.length > 0 && (
-                  <div className="pt-1">
-                    <div className="flex flex-wrap gap-1">
-                      {participants.map((p) => (
-                        <span
-                          key={p.id}
-                          className="text-[10px] bg-[#FAF7F2] border border-[#EAE4DC] text-[#181F1A] px-2 py-0.5 rounded-md"
-                        >
-                          {p.userName}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Action Buttons */}
               <div className="pt-2 border-t border-[#F2ECE4]">
-                {isUserRegistered ? (
+                {isCancelled ? (
+                  <button
+                    disabled
+                    className="w-full py-2 rounded-xl bg-gray-100 text-gray-400 text-xs font-bold cursor-not-allowed"
+                  >
+                    Visit Postponed / Cancelled
+                  </button>
+                ) : isUserRegistered ? (
                   <button
                     onClick={() => handleLeaveVisit(visit.id)}
-                    className="w-full py-2 rounded-xl border border-[#B85438] text-[#B85438] hover:bg-[#FAF0EC] text-xs font-bold transition"
+                    className="w-full py-2 rounded-xl border border-[#B85438] text-[#B85438] hover:bg-[#FAF0EC] text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B85438]"
                   >
                     Cancel Reservation
                   </button>
@@ -236,7 +238,7 @@ export const GroupVisitsView: React.FC<GroupVisitsViewProps> = ({
                   <button
                     id={`btn-join-visit-${visit.id}`}
                     onClick={() => setSelectedVisitId(visit.id)}
-                    className="w-full py-2 bg-[#183B2B] hover:bg-[#24533E] text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center justify-center space-x-1.5"
+                    className="w-full py-2 bg-[#183B2B] hover:bg-[#24533E] text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center justify-center space-x-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B]"
                   >
                     <Users className="w-3.5 h-3.5" />
                     <span>Join Group Visit</span>
@@ -265,7 +267,7 @@ export const GroupVisitsView: React.FC<GroupVisitsViewProps> = ({
             </div>
 
             <p className="text-xs text-[#58625B] leading-relaxed">
-              You will be registered under <strong className="text-[#181F1A]">{currentUser.fullName}</strong>. To protect privacy, only your first name will appear on the group roster.
+              You will be registered under <strong className="text-[#181F1A]">{currentUser.fullName}</strong>. To protect adopter privacy, attendee identities are never publicly visible and are only shared with the hosting shelter coordinator.
             </p>
 
             <div className="space-y-1.5 text-xs">

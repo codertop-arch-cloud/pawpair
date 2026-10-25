@@ -403,7 +403,26 @@ class LocalDataStore {
     return this.getVisits().find((v) => v.id === id);
   }
 
-  public getVisitParticipants(visitId: string): VisitParticipant[] {
+  public isUserRegisteredForVisit(visitId: string, userId: string): boolean {
+    try {
+      const data = storage.getItem(STORAGE_KEYS.VISIT_PARTICIPANTS);
+      const map: Record<string, VisitParticipant[]> = data ? JSON.parse(data) : SEED_VISIT_PARTICIPANTS;
+      return (map[visitId] || []).some((p) => p.userId === userId && p.status === 'confirmed');
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Returns participant roster ONLY to authorized shelter staff or administrators.
+   * Adopters receive an empty list to protect attendee privacy.
+   */
+  public getVisitParticipants(visitId: string, requester?: UserProfile): VisitParticipant[] {
+    const caller = requester || this.getCurrentUser();
+    if (caller.role !== 'shelter_staff') {
+      return [];
+    }
+
     try {
       const data = storage.getItem(STORAGE_KEYS.VISIT_PARTICIPANTS);
       const map: Record<string, VisitParticipant[]> = data ? JSON.parse(data) : SEED_VISIT_PARTICIPANTS;

@@ -152,26 +152,37 @@ export const LifestyleMatcher: React.FC<LifestyleMatcherProps> = ({
               return (
                 <button
                   key={idx}
+                  type="button"
                   onClick={() => setCurrentStep(idx)}
-                  className={`p-2.5 rounded-xl text-left transition flex items-center space-x-2.5 ${
+                  className={`p-3 rounded-xl text-left transition-all flex items-center space-x-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
                     isActive
                       ? 'bg-[#183B2B] text-white shadow-xs'
                       : isPast
-                      ? 'bg-[#EDF4F0] text-[#183B2B]'
+                      ? 'bg-[#EDF4F0] text-[#183B2B] hover:bg-[#E3EFE8]'
                       : 'bg-[#FAF7F2] text-[#58625B] hover:bg-[#F2ECE4]'
                   }`}
                 >
                   <div
-                    className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${
-                      isActive ? 'bg-white/20 text-white' : isPast ? 'bg-[#357457] text-white' : 'bg-[#EAE4DC] text-[#58625B]'
+                    className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 transition ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : isPast
+                        ? 'bg-[#357457] text-white'
+                        : 'bg-[#EAE4DC] text-[#58625B]'
                     }`}
                   >
-                    {isPast ? <Check className="w-3.5 h-3.5" /> : idx + 1}
+                    {isPast ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : idx + 1}
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold truncate leading-tight">{step.title.split('. ')[1]}</p>
-                    <p className={`text-[10px] truncate ${isActive ? 'text-gray-200' : 'text-[#8B958E]'}`}>
-                      {isActive ? 'In Progress' : isPast ? 'Completed' : 'Pending'}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold truncate leading-tight">
+                      {step.title.split('. ')[1]}
+                    </p>
+                    <p
+                      className={`text-[10px] uppercase font-bold tracking-wider truncate mt-0.5 ${
+                        isActive ? 'text-gray-200' : isPast ? 'text-[#357457]' : 'text-[#8B958E]'
+                      }`}
+                    >
+                      {isActive ? 'Current Step' : isPast ? 'Completed' : 'Upcoming'}
                     </p>
                   </div>
                 </button>
@@ -183,82 +194,152 @@ export const LifestyleMatcher: React.FC<LifestyleMatcherProps> = ({
 
       {/* STEP 1: HOUSEHOLD & PETS */}
       {currentStep === 0 && (
-        <div className="bg-white rounded-3xl p-6 border border-[#EAE4DC] shadow-xs space-y-6">
+        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#EAE4DC] shadow-xs space-y-6">
           <div className="border-b border-[#F2ECE4] pb-3">
             <h2 className="text-xl font-bold font-serif-heading text-[#181F1A]">
               1. Household Composition & Social Safety
             </h2>
             <p className="text-xs text-[#58625B] mt-0.5">
-              These factors trigger animal welfare constraints to prevent placing dogs with prey drive near vulnerable pets or infants.
+              These factors trigger animal welfare safety rules to prevent placing high-prey-drive dogs near vulnerable pets or small children.
             </p>
           </div>
 
           <div className="space-y-3">
-            <label className="flex items-center justify-between p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE4DC] hover:border-[#183B2B] transition cursor-pointer">
-              <div>
-                <span className="font-bold text-sm text-[#181F1A] block">Resident Cat(s)</span>
-                <span className="text-xs text-[#58625B]">
-                  Applies strict hard constraint against high-prey-drive breeds or cat-reactive rescues
-                </span>
-              </div>
-              <input
-                type="checkbox"
-                checked={formData.householdPets.hasCats}
-                onChange={(e) =>
+            {/* Custom Checkbox: Resident Cats */}
+            <div
+              role="checkbox"
+              aria-checked={formData.householdPets.hasCats}
+              tabIndex={0}
+              onClick={() =>
+                setFormData({
+                  ...formData,
+                  householdPets: { ...formData.householdPets, hasCats: !formData.householdPets.hasCats },
+                })
+              }
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                  e.preventDefault();
                   setFormData({
                     ...formData,
-                    householdPets: { ...formData.householdPets, hasCats: e.target.checked },
-                  })
+                    householdPets: { ...formData.householdPets, hasCats: !formData.householdPets.hasCats },
+                  });
                 }
-                className="w-5 h-5 rounded text-[#183B2B] focus:ring-0 cursor-pointer accent-[#183B2B]"
-              />
-            </label>
+              }}
+              className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
+                formData.householdPets.hasCats
+                  ? 'border-[#183B2B] bg-[#EDF4F0]/60 ring-1 ring-[#183B2B]/20 shadow-xs'
+                  : 'border-[#EAE4DC] bg-[#FAF7F2] hover:border-[#D5CEBF] hover:bg-white'
+              }`}
+            >
+              <div className="pr-4">
+                <span className="font-bold text-sm text-[#181F1A] block">Resident Cat(s) in Home</span>
+                <span className="text-xs text-[#58625B] mt-0.5 block leading-relaxed">
+                  Applies strict welfare constraint against dogs with cat-reactivity or prey-drive history
+                </span>
+              </div>
+              <div
+                className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+                  formData.householdPets.hasCats
+                    ? 'bg-[#183B2B] text-white shadow-xs'
+                    : 'border-2 border-[#D5CEBF] bg-white'
+                }`}
+              >
+                {formData.householdPets.hasCats && <Check className="w-4 h-4 stroke-[2.5]" />}
+              </div>
+            </div>
 
-            <label className="flex items-center justify-between p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE4DC] hover:border-[#183B2B] transition cursor-pointer">
-              <div>
+            {/* Custom Checkbox: Young Children */}
+            <div
+              role="checkbox"
+              aria-checked={formData.householdPets.hasKids}
+              tabIndex={0}
+              onClick={() =>
+                setFormData({
+                  ...formData,
+                  householdPets: { ...formData.householdPets, hasKids: !formData.householdPets.hasKids },
+                })
+              }
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                  e.preventDefault();
+                  setFormData({
+                    ...formData,
+                    householdPets: { ...formData.householdPets, hasKids: !formData.householdPets.hasKids },
+                  });
+                }
+              }}
+              className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
+                formData.householdPets.hasKids
+                  ? 'border-[#183B2B] bg-[#EDF4F0]/60 ring-1 ring-[#183B2B]/20 shadow-xs'
+                  : 'border-[#EAE4DC] bg-[#FAF7F2] hover:border-[#D5CEBF] hover:bg-white'
+              }`}
+            >
+              <div className="pr-4">
                 <span className="font-bold text-sm text-[#181F1A] block">Young Children (&lt; 10 years old)</span>
-                <span className="text-xs text-[#58625B]">
-                  Ensures gentle, patient temperament suitable for fast movements and loud voices
+                <span className="text-xs text-[#58625B] mt-0.5 block leading-relaxed">
+                  Filters for gentle, patient temperaments suited to fast movements, toys, and noise
                 </span>
               </div>
-              <input
-                type="checkbox"
-                checked={formData.householdPets.hasKids}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    householdPets: { ...formData.householdPets, hasKids: e.target.checked },
-                  })
-                }
-                className="w-5 h-5 rounded text-[#183B2B] focus:ring-0 cursor-pointer accent-[#183B2B]"
-              />
-            </label>
+              <div
+                className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+                  formData.householdPets.hasKids
+                    ? 'bg-[#183B2B] text-white shadow-xs'
+                    : 'border-2 border-[#D5CEBF] bg-white'
+                }`}
+              >
+                {formData.householdPets.hasKids && <Check className="w-4 h-4 stroke-[2.5]" />}
+              </div>
+            </div>
 
-            <label className="flex items-center justify-between p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE4DC] hover:border-[#183B2B] transition cursor-pointer">
-              <div>
-                <span className="font-bold text-sm text-[#181F1A] block">Other Resident Dogs</span>
-                <span className="text-xs text-[#58625B]">
-                  Matches dog-social temperaments and multi-dog household compatibility
-                </span>
-              </div>
-              <input
-                type="checkbox"
-                checked={formData.householdPets.hasDogs}
-                onChange={(e) =>
+            {/* Custom Checkbox: Other Resident Dogs */}
+            <div
+              role="checkbox"
+              aria-checked={formData.householdPets.hasDogs}
+              tabIndex={0}
+              onClick={() =>
+                setFormData({
+                  ...formData,
+                  householdPets: { ...formData.householdPets, hasDogs: !formData.householdPets.hasDogs },
+                })
+              }
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                  e.preventDefault();
                   setFormData({
                     ...formData,
-                    householdPets: { ...formData.householdPets, hasDogs: e.target.checked },
-                  })
+                    householdPets: { ...formData.householdPets, hasDogs: !formData.householdPets.hasDogs },
+                  });
                 }
-                className="w-5 h-5 rounded text-[#183B2B] focus:ring-0 cursor-pointer accent-[#183B2B]"
-              />
-            </label>
+              }}
+              className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
+                formData.householdPets.hasDogs
+                  ? 'border-[#183B2B] bg-[#EDF4F0]/60 ring-1 ring-[#183B2B]/20 shadow-xs'
+                  : 'border-[#EAE4DC] bg-[#FAF7F2] hover:border-[#D5CEBF] hover:bg-white'
+              }`}
+            >
+              <div className="pr-4">
+                <span className="font-bold text-sm text-[#181F1A] block">Other Resident Dogs in Home</span>
+                <span className="text-xs text-[#58625B] mt-0.5 block leading-relaxed">
+                  Matches dog-social temperaments suitable for multi-dog play and shared living spaces
+                </span>
+              </div>
+              <div
+                className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+                  formData.householdPets.hasDogs
+                    ? 'bg-[#183B2B] text-white shadow-xs'
+                    : 'border-2 border-[#D5CEBF] bg-white'
+                }`}
+              >
+                {formData.householdPets.hasDogs && <Check className="w-4 h-4 stroke-[2.5]" />}
+              </div>
+            </div>
           </div>
 
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end pt-2 border-t border-[#F2ECE4]">
             <button
+              type="button"
               onClick={() => setCurrentStep(1)}
-              className="px-6 py-2.5 rounded-xl bg-[#183B2B] hover:bg-[#24533E] text-white text-xs font-bold transition flex items-center space-x-2"
+              className="px-6 py-2.5 rounded-xl bg-[#183B2B] hover:bg-[#24533E] text-white text-xs font-bold transition flex items-center space-x-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B]"
             >
               <span>Continue: Living Environment</span>
               <ChevronRight className="w-4 h-4" />
@@ -269,81 +350,120 @@ export const LifestyleMatcher: React.FC<LifestyleMatcherProps> = ({
 
       {/* STEP 2: LIVING ENVIRONMENT */}
       {currentStep === 1 && (
-        <div className="bg-white rounded-3xl p-6 border border-[#EAE4DC] shadow-xs space-y-6">
+        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#EAE4DC] shadow-xs space-y-6">
           <div className="border-b border-[#F2ECE4] pb-3">
             <h2 className="text-xl font-bold font-serif-heading text-[#181F1A]">
               2. Living Space & Preferred Size
             </h2>
             <p className="text-xs text-[#58625B] mt-0.5">
-              Ensures the dog's physical size and territory needs match your home.
+              Ensures the dog's physical size and territory needs match your dwelling and outdoor access.
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* Dwelling Type Selection */}
             <div>
               <label className="text-xs font-bold text-[#181F1A] uppercase tracking-wider block mb-2">
                 Home Type & Yard Access
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
                 {[
-                  { id: 'apartment_no_yard', label: 'Apartment / Condo (No Yard)' },
-                  { id: 'apartment_balcony', label: 'Apartment with Balcony' },
-                  { id: 'house_small_yard', label: 'House with Small Fenced Yard' },
-                  { id: 'house_large_yard', label: 'House with Large Fenced Yard' },
-                  { id: 'rural_ranch', label: 'Rural Property / Acreage' },
-                ].map((env) => (
-                  <button
-                    key={env.id}
-                    type="button"
-                    onClick={() =>
-                      setFormData({ ...formData, livingEnvironment: env.id as any })
-                    }
-                    className={`p-3 rounded-2xl border text-left font-medium transition ${
-                      formData.livingEnvironment === env.id
-                        ? 'border-[#183B2B] bg-[#EDF4F0] text-[#183B2B] font-semibold'
-                        : 'border-[#EAE4DC] bg-[#FAF7F2] text-[#181F1A] hover:border-[#183B2B]'
-                    }`}
-                  >
-                    {env.label}
-                  </button>
-                ))}
+                  { id: 'apartment_no_yard', label: 'Apartment / Condo', desc: 'No private yard access' },
+                  { id: 'apartment_balcony', label: 'Apartment with Balcony', desc: 'Enclosed outdoor space' },
+                  { id: 'house_small_yard', label: 'House (Small Fenced Yard)', desc: 'Secure fenced perimeter' },
+                  { id: 'house_large_yard', label: 'House (Large Fenced Yard)', desc: 'Generous running area' },
+                  { id: 'rural_ranch', label: 'Rural Property / Acreage', desc: 'Open country or farm space' },
+                ].map((env) => {
+                  const isSelected = formData.livingEnvironment === env.id;
+                  return (
+                    <button
+                      key={env.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, livingEnvironment: env.id as any })}
+                      className={`p-3.5 rounded-2xl border text-left transition-all flex items-start justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
+                        isSelected
+                          ? 'border-[#183B2B] bg-[#EDF4F0]/70 ring-1 ring-[#183B2B]/20 shadow-xs'
+                          : 'border-[#EAE4DC] bg-[#FAF7F2] hover:border-[#D5CEBF] hover:bg-white text-[#181F1A]'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <span className={`text-xs block font-bold ${isSelected ? 'text-[#183B2B]' : 'text-[#181F1A]'}`}>
+                          {env.label}
+                        </span>
+                        <span className="text-[11px] text-[#58625B] mt-0.5 block">{env.desc}</span>
+                      </div>
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition ${
+                          isSelected ? 'border-[#183B2B] bg-white' : 'border-[#D5CEBF] bg-white'
+                        }`}
+                      >
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-[#183B2B]" />}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
+            {/* Preferred Sizes Selection & Validation */}
             <div className="pt-2">
-              <label className="text-xs font-bold text-[#181F1A] uppercase tracking-wider block mb-2">
-                Preferred Dog Sizes
-              </label>
-              <div className="flex flex-wrap gap-2 text-xs">
-                {(['small', 'medium', 'large', 'giant'] as DogSize[]).map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => toggleSize(size)}
-                    className={`px-3.5 py-2 rounded-xl border capitalize font-medium transition ${
-                      formData.preferredSizes.includes(size)
-                        ? 'border-[#183B2B] bg-[#183B2B] text-white shadow-xs'
-                        : 'border-[#EAE4DC] bg-[#FAF7F2] text-[#181F1A] hover:border-[#183B2B]'
-                    }`}
-                  >
-                    {size} ({size === 'small' ? '<25 lbs' : size === 'medium' ? '25-55 lbs' : size === 'large' ? '55-85 lbs' : '85+ lbs'})
-                  </button>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-[#181F1A] uppercase tracking-wider block">
+                  Preferred Dog Sizes
+                </label>
+                <span className="text-[11px] text-[#8B958E]">Select all that apply</span>
               </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {(['small', 'medium', 'large', 'giant'] as DogSize[]).map((size) => {
+                  const isChecked = formData.preferredSizes.includes(size);
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => toggleSize(size)}
+                      className={`px-4 py-2.5 rounded-xl border capitalize font-semibold transition-all flex items-center space-x-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
+                        isChecked
+                          ? 'border-[#183B2B] bg-[#183B2B] text-white shadow-xs'
+                          : 'border-[#EAE4DC] bg-[#FAF7F2] text-[#181F1A] hover:border-[#D5CEBF] hover:bg-white'
+                      }`}
+                    >
+                      <span>
+                        {size} ({size === 'small' ? '<25 lbs' : size === 'medium' ? '25-55 lbs' : size === 'large' ? '55-85 lbs' : '85+ lbs'})
+                      </span>
+                      {isChecked && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Validation Warning when no size selected */}
+              {formData.preferredSizes.length === 0 && (
+                <div className="mt-3 bg-[#FAF0EC] border border-[#FCE8E2] text-[#B85438] p-3 rounded-xl text-xs flex items-center space-x-2 animate-in fade-in">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span>Please select at least one preferred dog size to match available rescues.</span>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex justify-between pt-2">
+          <div className="flex justify-between pt-2 border-t border-[#F2ECE4]">
             <button
+              type="button"
               onClick={() => setCurrentStep(0)}
-              className="px-4 py-2 rounded-xl border border-[#EAE4DC] text-xs font-semibold text-[#58625B] hover:bg-[#FAF7F2] flex items-center space-x-1"
+              className="px-4 py-2 rounded-xl border border-[#EAE4DC] text-xs font-semibold text-[#58625B] hover:bg-[#FAF7F2] flex items-center space-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B]"
             >
               <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
+              <span>Back</span>
             </button>
             <button
+              type="button"
+              disabled={formData.preferredSizes.length === 0}
               onClick={() => setCurrentStep(2)}
-              className="px-6 py-2.5 rounded-xl bg-[#183B2B] hover:bg-[#24533E] text-white text-xs font-bold transition flex items-center space-x-2"
+              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition flex items-center space-x-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
+                formData.preferredSizes.length === 0
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-[#183B2B] hover:bg-[#24533E] text-white shadow-xs'
+              }`}
             >
               <span>Continue: Routine & Energy</span>
               <ChevronRight className="w-4 h-4" />
@@ -354,24 +474,25 @@ export const LifestyleMatcher: React.FC<LifestyleMatcherProps> = ({
 
       {/* STEP 3: ROUTINE & ENERGY */}
       {currentStep === 2 && (
-        <div className="bg-white rounded-3xl p-6 border border-[#EAE4DC] shadow-xs space-y-6">
+        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#EAE4DC] shadow-xs space-y-6">
           <div className="border-b border-[#F2ECE4] pb-3">
             <h2 className="text-xl font-bold font-serif-heading text-[#181F1A]">
               3. Activity Rhythm & Schedule
             </h2>
             <p className="text-xs text-[#58625B] mt-0.5">
-              Prevents energy mismatches where high-drive working breeds are placed in sedentary homes.
+              Prevents energy mismatches where high-drive working breeds are placed in low-exercise homes.
             </p>
           </div>
 
-          <div className="space-y-5">
-            <div className="space-y-2">
+          <div className="space-y-6">
+            {/* Daily Exercise Slider with Presets */}
+            <div className="space-y-3">
               <div className="flex justify-between items-center text-xs">
                 <label className="font-bold text-[#181F1A] uppercase tracking-wider">
                   Dedicated Daily Exercise Time
                 </label>
-                <span className="font-bold text-[#183B2B] bg-[#EDF4F0] px-3 py-1 rounded-full">
-                  {formData.dailyTimeHours} Hours / Day
+                <span className="font-bold text-[#183B2B] bg-[#EDF4F0] px-3 py-1 rounded-full border border-[#D8F3DC]">
+                  {formData.dailyTimeHours} {formData.dailyTimeHours === 1 ? 'Hour' : 'Hours'} / Day
                 </span>
               </div>
               <input
@@ -385,82 +506,130 @@ export const LifestyleMatcher: React.FC<LifestyleMatcherProps> = ({
                 }
                 className="w-full accent-[#183B2B] cursor-pointer"
               />
-              <div className="flex justify-between text-[11px] text-[#8B958E]">
-                <span>0.5h (Relaxed stroll)</span>
-                <span>2.0h (Active walks/park)</span>
-                <span>4.0h (Running/Hiking)</span>
+              {/* Quick Presets */}
+              <div className="flex items-center space-x-2 pt-0.5">
+                <span className="text-[11px] text-[#8B958E] font-medium mr-1">Presets:</span>
+                {[
+                  { value: 0.5, label: '30 min (Leisurely)' },
+                  { value: 1.0, label: '1 hr (Daily Walk)' },
+                  { value: 2.0, label: '2 hrs (Active)' },
+                  { value: 3.5, label: '3.5+ hrs (Athletic)' },
+                ].map((preset) => (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, dailyTimeHours: preset.value })}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${
+                      formData.dailyTimeHours === preset.value
+                        ? 'bg-[#183B2B] text-white border-[#183B2B]'
+                        : 'bg-[#FAF7F2] text-[#58625B] border-[#EAE4DC] hover:border-[#183B2B]'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
               </div>
             </div>
 
+            {/* Personal Activity Style */}
             <div>
               <label className="text-xs font-bold text-[#181F1A] uppercase tracking-wider block mb-2">
                 Personal Activity Style
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
                 {[
-                  { id: 'sedentary', label: 'Relaxed / Low-key' },
-                  { id: 'light', label: 'Light (Daily strolls)' },
-                  { id: 'moderate', label: 'Moderate (Active walks)' },
-                  { id: 'very_active', label: 'Athletic (Run/Hike)' },
-                ].map((act) => (
-                  <button
-                    key={act.id}
-                    type="button"
-                    onClick={() =>
-                      setFormData({ ...formData, dailyActivityLevel: act.id as any })
-                    }
-                    className={`p-3 rounded-2xl border text-center font-medium transition ${
-                      formData.dailyActivityLevel === act.id
-                        ? 'border-[#183B2B] bg-[#EDF4F0] text-[#183B2B] font-semibold'
-                        : 'border-[#EAE4DC] bg-[#FAF7F2] text-[#181F1A] hover:border-[#183B2B]'
-                    }`}
-                  >
-                    {act.label}
-                  </button>
-                ))}
+                  { id: 'sedentary', label: 'Relaxed / Low-key', desc: 'Calm indoor days & strolls' },
+                  { id: 'light', label: 'Light', desc: 'Regular neighborhood walks' },
+                  { id: 'moderate', label: 'Moderate', desc: 'Parks, play sessions, longer walks' },
+                  { id: 'very_active', label: 'Athletic', desc: 'Running, hiking, trail adventures' },
+                ].map((act) => {
+                  const isSelected = formData.dailyActivityLevel === act.id;
+                  return (
+                    <button
+                      key={act.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, dailyActivityLevel: act.id as any })}
+                      className={`p-3.5 rounded-2xl border text-left transition-all flex items-start justify-between gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
+                        isSelected
+                          ? 'border-[#183B2B] bg-[#EDF4F0]/70 ring-1 ring-[#183B2B]/20 shadow-xs'
+                          : 'border-[#EAE4DC] bg-[#FAF7F2] hover:border-[#D5CEBF] hover:bg-white text-[#181F1A]'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <span className={`text-xs block font-bold ${isSelected ? 'text-[#183B2B]' : 'text-[#181F1A]'}`}>
+                          {act.label}
+                        </span>
+                        <span className="text-[11px] text-[#58625B] mt-0.5 block">{act.desc}</span>
+                      </div>
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition ${
+                          isSelected ? 'border-[#183B2B] bg-white' : 'border-[#D5CEBF] bg-white'
+                        }`}
+                      >
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-[#183B2B]" />}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
+            {/* Work Routine */}
             <div>
               <label className="text-xs font-bold text-[#181F1A] uppercase tracking-wider block mb-2">
                 Work Routine & Hours Away
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
                 {[
-                  { id: 'full_time', label: 'Full-time WFH' },
-                  { id: 'hybrid', label: 'Hybrid (Part-time home)' },
-                  { id: 'office', label: 'Office (Away 8+ hrs)' },
-                ].map((wrk) => (
-                  <button
-                    key={wrk.id}
-                    type="button"
-                    onClick={() =>
-                      setFormData({ ...formData, workFromHome: wrk.id as any })
-                    }
-                    className={`p-3 rounded-2xl border text-center font-medium transition ${
-                      formData.workFromHome === wrk.id
-                        ? 'border-[#183B2B] bg-[#EDF4F0] text-[#183B2B] font-semibold'
-                        : 'border-[#EAE4DC] bg-[#FAF7F2] text-[#181F1A] hover:border-[#183B2B]'
-                    }`}
-                  >
-                    {wrk.label}
-                  </button>
-                ))}
+                  { id: 'full_time', label: 'Full-time WFH', desc: 'Home throughout the day (<2h alone)' },
+                  { id: 'hybrid', label: 'Hybrid Schedule', desc: 'In office 2-3 days (4-6h alone)' },
+                  { id: 'office', label: 'Full Office Hours', desc: 'Away on standard workday (7-8h alone)' },
+                ].map((wrk) => {
+                  const isSelected = formData.workFromHome === wrk.id;
+                  return (
+                    <button
+                      key={wrk.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, workFromHome: wrk.id as any })}
+                      className={`p-3.5 rounded-2xl border text-left transition-all flex items-start justify-between gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
+                        isSelected
+                          ? 'border-[#183B2B] bg-[#EDF4F0]/70 ring-1 ring-[#183B2B]/20 shadow-xs'
+                          : 'border-[#EAE4DC] bg-[#FAF7F2] hover:border-[#D5CEBF] hover:bg-white text-[#181F1A]'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <span className={`text-xs block font-bold ${isSelected ? 'text-[#183B2B]' : 'text-[#181F1A]'}`}>
+                          {wrk.label}
+                        </span>
+                        <span className="text-[11px] text-[#58625B] mt-0.5 block">{wrk.desc}</span>
+                      </div>
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition ${
+                          isSelected ? 'border-[#183B2B] bg-white' : 'border-[#D5CEBF] bg-white'
+                        }`}
+                      >
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-[#183B2B]" />}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          <div className="flex justify-between pt-2">
+          <div className="flex justify-between pt-2 border-t border-[#F2ECE4]">
             <button
+              type="button"
               onClick={() => setCurrentStep(1)}
-              className="px-4 py-2 rounded-xl border border-[#EAE4DC] text-xs font-semibold text-[#58625B] hover:bg-[#FAF7F2] flex items-center space-x-1"
+              className="px-4 py-2 rounded-xl border border-[#EAE4DC] text-xs font-semibold text-[#58625B] hover:bg-[#FAF7F2] flex items-center space-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B]"
             >
               <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
+              <span>Back</span>
             </button>
             <button
+              type="button"
               onClick={() => setCurrentStep(3)}
-              className="px-6 py-2.5 rounded-xl bg-[#183B2B] hover:bg-[#24533E] text-white text-xs font-bold transition flex items-center space-x-2"
+              className="px-6 py-2.5 rounded-xl bg-[#183B2B] hover:bg-[#24533E] text-white text-xs font-bold transition flex items-center space-x-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B]"
             >
               <span>Continue: Experience & Care</span>
               <ChevronRight className="w-4 h-4" />
@@ -471,80 +640,133 @@ export const LifestyleMatcher: React.FC<LifestyleMatcherProps> = ({
 
       {/* STEP 4: EXPERIENCE & CARE */}
       {currentStep === 3 && (
-        <div className="bg-white rounded-3xl p-6 border border-[#EAE4DC] shadow-xs space-y-6">
+        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#EAE4DC] shadow-xs space-y-6">
           <div className="border-b border-[#F2ECE4] pb-3">
             <h2 className="text-xl font-bold font-serif-heading text-[#181F1A]">
               4. Experience & Training Background
             </h2>
             <p className="text-xs text-[#58625B] mt-0.5">
-              Assesses training readiness and accommodation for rescue transition requirements.
+              Assesses guardian comfort with behavioral boundaries and accommodation for medical/special care needs.
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* Guardian Experience Cards */}
             <div>
               <label className="text-xs font-bold text-[#181F1A] uppercase tracking-wider block mb-2">
                 Dog Guardian Experience
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 {[
-                  { id: 'first_time', label: 'First-time Guardian', desc: 'Seeking gentle, forgiving dogs' },
-                  { id: 'intermediate', label: 'Intermediate Guardian', desc: 'Comfortable with basic training' },
-                  { id: 'experienced', label: 'Experienced Guardian', desc: 'Familiar with reactive/high-drive' },
-                ].map((exp) => (
-                  <button
-                    key={exp.id}
-                    type="button"
-                    onClick={() =>
-                      setFormData({ ...formData, experienceLevel: exp.id as any })
-                    }
-                    className={`p-3.5 rounded-2xl border text-left transition ${
-                      formData.experienceLevel === exp.id
-                        ? 'border-[#183B2B] bg-[#EDF4F0] text-[#183B2B]'
-                        : 'border-[#EAE4DC] bg-[#FAF7F2] text-[#181F1A] hover:border-[#183B2B]'
-                    }`}
-                  >
-                    <span className="font-bold block">{exp.label}</span>
-                    <span className="text-[11px] text-[#58625B] mt-0.5 block">{exp.desc}</span>
-                  </button>
-                ))}
+                  {
+                    id: 'first_time',
+                    label: 'First-time Guardian',
+                    desc: 'Seeking gentle, forgiving temperaments and easy handling',
+                  },
+                  {
+                    id: 'intermediate',
+                    label: 'Intermediate Guardian',
+                    desc: 'Comfortable with basic cues, house manners, and routine training',
+                  },
+                  {
+                    id: 'experienced',
+                    label: 'Experienced Guardian',
+                    desc: 'Familiar with high-drive, reactive, or complex rescue backgrounds',
+                  },
+                ].map((exp) => {
+                  const isSelected = formData.experienceLevel === exp.id;
+                  return (
+                    <button
+                      key={exp.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, experienceLevel: exp.id as any })}
+                      className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
+                        isSelected
+                          ? 'border-[#183B2B] bg-[#EDF4F0]/70 ring-1 ring-[#183B2B]/20 shadow-xs'
+                          : 'border-[#EAE4DC] bg-[#FAF7F2] hover:border-[#D5CEBF] hover:bg-white text-[#181F1A]'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start w-full">
+                        <span className={`font-bold block text-xs ${isSelected ? 'text-[#183B2B]' : 'text-[#181F1A]'}`}>
+                          {exp.label}
+                        </span>
+                        <div
+                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition ml-2 ${
+                            isSelected ? 'border-[#183B2B] bg-white' : 'border-[#D5CEBF] bg-white'
+                          }`}
+                        >
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-[#183B2B]" />}
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-[#58625B] mt-2 block leading-relaxed">{exp.desc}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <label className="flex items-center justify-between p-4 rounded-2xl bg-[#FAF7F2] border border-[#EAE4DC] hover:border-[#183B2B] transition cursor-pointer">
-              <div>
+            {/* Custom Checkbox: Special Medical / Behavioral Needs */}
+            <div
+              role="checkbox"
+              aria-checked={formData.willingToAccommodateNeeds}
+              tabIndex={0}
+              onClick={() =>
+                setFormData({
+                  ...formData,
+                  willingToAccommodateNeeds: !formData.willingToAccommodateNeeds,
+                })
+              }
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                  e.preventDefault();
+                  setFormData({
+                    ...formData,
+                    willingToAccommodateNeeds: !formData.willingToAccommodateNeeds,
+                  });
+                }
+              }}
+              className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
+                formData.willingToAccommodateNeeds
+                  ? 'border-[#183B2B] bg-[#EDF4F0]/60 ring-1 ring-[#183B2B]/20 shadow-xs'
+                  : 'border-[#EAE4DC] bg-[#FAF7F2] hover:border-[#D5CEBF] hover:bg-white'
+              }`}
+            >
+              <div className="pr-4">
                 <span className="font-bold text-sm text-[#181F1A] block">
-                  Open to Special Medical or Behavioral Needs
+                  Open to Special Medical or Behavioral Care
                 </span>
-                <span className="text-xs text-[#58625B]">
-                  Such as dietary management, senior joint supplements, or structured positive reinforcement
+                <span className="text-xs text-[#58625B] mt-0.5 block leading-relaxed">
+                  Includes dietary management, senior joint supplements, medication administration, or structured desensitization
                 </span>
               </div>
-              <input
-                type="checkbox"
-                checked={formData.willingToAccommodateNeeds}
-                onChange={(e) =>
-                  setFormData({ ...formData, willingToAccommodateNeeds: e.target.checked })
-                }
-                className="w-5 h-5 rounded text-[#183B2B] focus:ring-0 cursor-pointer accent-[#183B2B]"
-              />
-            </label>
+              <div
+                className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+                  formData.willingToAccommodateNeeds
+                    ? 'bg-[#183B2B] text-white shadow-xs'
+                    : 'border-2 border-[#D5CEBF] bg-white'
+                }`}
+              >
+                {formData.willingToAccommodateNeeds && <Check className="w-4 h-4 stroke-[2.5]" />}
+              </div>
+            </div>
           </div>
 
-          <div className="flex justify-between pt-2">
+          <div className="flex justify-between pt-2 border-t border-[#F2ECE4]">
             <button
+              type="button"
               onClick={() => setCurrentStep(2)}
-              className="px-4 py-2 rounded-xl border border-[#EAE4DC] text-xs font-semibold text-[#58625B] hover:bg-[#FAF7F2] flex items-center space-x-1"
+              className="px-4 py-2 rounded-xl border border-[#EAE4DC] text-xs font-semibold text-[#58625B] hover:bg-[#FAF7F2] flex items-center space-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B]"
             >
               <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
+              <span>Back</span>
             </button>
             <button
+              type="button"
               onClick={handleSaveAndShowResults}
-              className="px-6 py-2.5 rounded-xl bg-[#183B2B] hover:bg-[#24533E] text-white text-xs font-bold transition flex items-center space-x-2 shadow-xs"
+              className="px-6 py-2.5 rounded-xl bg-[#183B2B] hover:bg-[#24533E] text-white text-xs font-bold transition flex items-center space-x-2 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B]"
             >
               <Sparkles className="w-4 h-4 text-[#EDF4F0]" />
-              <span>Save & View Ranked Matches</span>
+              <span>Calculate Matches ({rankedDogs.length})</span>
             </button>
           </div>
         </div>
@@ -553,15 +775,21 @@ export const LifestyleMatcher: React.FC<LifestyleMatcherProps> = ({
       {/* STEP 5: MATCH EXPLORER RESULTS */}
       {currentStep === 4 && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold font-serif-heading text-[#181F1A]">
-              Ranked Compatibility Recommendations ({rankedDogs.length})
-            </h2>
+          <div className="flex items-center justify-between pb-1">
+            <div>
+              <h2 className="text-xl font-bold font-serif-heading text-[#181F1A]">
+                Ranked Compatibility Recommendations ({rankedDogs.length})
+              </h2>
+              <p className="text-xs text-[#58625B] mt-0.5">
+                Calculated using your preferences: {formData.preferredSizes.join(', ')} size • {formData.dailyTimeHours}h daily exercise • {formData.livingEnvironment.replace(/_/g, ' ')}
+              </p>
+            </div>
             <button
               onClick={() => setCurrentStep(0)}
-              className="text-xs font-semibold text-[#183B2B] hover:underline"
+              className="text-xs font-bold text-[#183B2B] hover:underline flex items-center space-x-1"
             >
-              ← Edit Questionnaire Answers
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Adjust Answers</span>
             </button>
           </div>
 
@@ -569,37 +797,42 @@ export const LifestyleMatcher: React.FC<LifestyleMatcherProps> = ({
             {rankedDogs.map(({ dog, result }) => (
               <div
                 key={dog.id}
-                className={`bg-white rounded-3xl p-5 border transition shadow-xs hover:shadow-md ${
+                className={`bg-white rounded-3xl p-5 border transition-all shadow-xs hover:shadow-md ${
                   result.hardConstraintFailed
                     ? 'border-[#FCE8E2] bg-[#FFFBFB]'
                     : result.score >= 80
                     ? 'border-[#D8F3DC] hover:border-[#183B2B]'
-                    : 'border-[#EAE4DC]'
+                    : 'border-[#EAE4DC] hover:border-[#D5CEBF]'
                 }`}
               >
-                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                <div className="flex flex-col sm:flex-row gap-5 items-start">
                   {/* Dog Image */}
                   <img
                     src={dog.photos[0]}
                     alt={dog.name}
-                    className="w-full sm:w-32 sm:h-32 rounded-2xl object-cover flex-shrink-0"
+                    className="w-full sm:w-36 sm:h-36 rounded-2xl object-cover flex-shrink-0"
                   />
 
                   {/* Info Column */}
-                  <div className="flex-1 min-w-0 space-y-2">
+                  <div className="flex-1 min-w-0 space-y-2.5">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <div>
-                        <h3 className="font-bold text-xl font-serif-heading text-[#181F1A]">
-                          {dog.name}
-                        </h3>
+                        <div className="flex items-baseline space-x-2">
+                          <h3 className="font-bold text-xl font-serif-heading text-[#181F1A]">
+                            {dog.name}
+                          </h3>
+                          <span className="text-xs text-[#58625B]">
+                            {dog.ageYears} yrs • {dog.gender}
+                          </span>
+                        </div>
                         <p className="text-xs text-[#58625B]">
-                          {dog.breed} • {dog.ageYears} yrs • {dog.shelterName}
+                          {dog.breed} • {dog.shelterName} ({dog.location})
                         </p>
                       </div>
 
                       {/* Score Badge */}
                       <span
-                        className={`text-xs font-bold px-3 py-1 rounded-full border ${
+                        className={`text-xs font-bold px-3 py-1 rounded-full border shadow-xs ${
                           result.hardConstraintFailed
                             ? 'bg-[#FAF0EC] text-[#B85438] border-[#FCE8E2]'
                             : result.score >= 80
@@ -613,35 +846,70 @@ export const LifestyleMatcher: React.FC<LifestyleMatcherProps> = ({
 
                     {/* Hard Constraint Failure Alert */}
                     {result.hardConstraintFailed && (
-                      <div className="bg-[#FAF0EC] border border-[#FCE8E2] text-[#B85438] p-2.5 rounded-xl text-xs flex items-center space-x-2">
-                        <ShieldAlert className="w-4 h-4 flex-shrink-0" />
-                        <span>{result.hardConstraintReason}</span>
+                      <div className="bg-[#FAF0EC] border border-[#FCE8E2] text-[#B85438] p-3 rounded-xl text-xs flex items-center space-x-2">
+                        <ShieldAlert className="w-4 h-4 flex-shrink-0 text-[#B85438]" />
+                        <span className="font-medium">{result.hardConstraintReason}</span>
                       </div>
                     )}
 
-                    {/* Highlights & Challenges */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs pt-1">
-                      {result.positiveHighlights.slice(0, 1).map((h, idx) => (
-                        <div key={idx} className="text-[#24533E] flex items-center space-x-1.5 bg-[#EDF4F0]/60 p-2 rounded-lg">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#357457] flex-shrink-0" />
-                          <span className="truncate">{h}</span>
+                    {/* Positive Compatibility Highlights */}
+                    {result.positiveHighlights.length > 0 && (
+                      <div className="space-y-1">
+                        <span className="text-[10px] uppercase font-bold text-[#357457] tracking-wider block">
+                          Why This Dog Matches Your Home:
+                        </span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-xs">
+                          {result.positiveHighlights.map((h, idx) => (
+                            <div
+                              key={idx}
+                              className="text-[#24533E] flex items-center space-x-1.5 bg-[#EDF4F0]/70 p-2 rounded-xl"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#357457] flex-shrink-0" />
+                              <span className="truncate">{h}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                      {result.potentialChallenges.slice(0, 1).map((c, idx) => (
-                        <div key={idx} className="text-[#963F28] flex items-center space-x-1.5 bg-[#FAF0EC]/60 p-2 rounded-lg">
-                          <AlertTriangle className="w-3.5 h-3.5 text-[#B85438] flex-shrink-0" />
-                          <span className="truncate">{c}</span>
-                        </div>
-                      ))}
-                    </div>
+                      </div>
+                    )}
 
-                    {/* Profile Action */}
-                    <div className="pt-1 flex justify-end">
+                    {/* Potential Challenges & Care Considerations */}
+                    {result.potentialChallenges.length > 0 && (
+                      <div className="space-y-1 pt-1">
+                        <span className="text-[10px] uppercase font-bold text-[#B85438] tracking-wider block">
+                          Care Considerations To Keep In Mind:
+                        </span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-xs">
+                          {result.potentialChallenges.map((c, idx) => (
+                            <div
+                              key={idx}
+                              className="text-[#963F28] flex items-center space-x-1.5 bg-[#FAF0EC]/70 p-2 rounded-xl"
+                            >
+                              <AlertTriangle className="w-3.5 h-3.5 text-[#B85438] flex-shrink-0" />
+                              <span className="truncate">{c}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Temperament Tags & Action */}
+                    <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[#F2ECE4]">
+                      <div className="flex flex-wrap gap-1">
+                        {dog.temperament.slice(0, 3).map((tag) => (
+                          <span
+                            key={tag}
+                            className="bg-[#FAF7F2] border border-[#EAE4DC] text-[#58625B] text-[10px] font-semibold px-2 py-0.5 rounded-md"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
                       <button
                         onClick={() => onOpenDogModal(dog)}
-                        className="text-xs font-bold text-[#183B2B] hover:text-[#24533E] flex items-center space-x-1"
+                        className="px-4 py-1.5 bg-[#183B2B] hover:bg-[#24533E] text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow-xs"
                       >
-                        <span>View Breakdown & Story</span>
+                        <span>Full Breakdown & Profile</span>
                         <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Heart,
   X,
@@ -13,6 +13,7 @@ import {
   Info,
   Check,
   Filter,
+  Bookmark,
 } from 'lucide-react';
 import { Dog, AdopterLifestylePreferences, DogSize, DogEnergy, DogAgeGroup } from '../../types';
 import { calculateCompatibility } from '../matching/matchingEngine';
@@ -125,6 +126,36 @@ export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
     setActiveStackIndex(0);
     setSwipedHistory([]);
   };
+
+  // Keyboard shortcuts for Discovery Deck (ArrowLeft: Pass, ArrowRight: Like, U/Z: Undo, Enter: Full Profile)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
+        return;
+      }
+      if (viewMode !== 'stack' || !currentStackDog) return;
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handlePass();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleLike();
+      } else if (e.key === 'u' || e.key === 'U' || e.key === 'z' || e.key === 'Z') {
+        if (activeStackIndex > 0) {
+          e.preventDefault();
+          handleUndo();
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        onOpenDogModal(currentStackDog);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewMode, currentStackDog, activeStackIndex, swipedHistory]);
 
   const hasActiveFilters =
     filterSize !== 'all' ||
@@ -319,169 +350,236 @@ export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
         </div>
       </div>
 
-      {/* VIEW 1: TINDER-STYLE DECK VIEW (Optimized proportions for viewport safety) */}
+      {/* VIEW 1: TINDER-STYLE DECK VIEW (Balanced desktop layout: photo on one side, profile & actions on the other) */}
       {viewMode === 'stack' ? (
-        <div className="flex flex-col items-center justify-center py-2">
+        <div className="w-full py-1">
           {currentStackDog ? (
-            <div className="w-full max-w-sm sm:max-w-md space-y-3">
-              {/* Stack Card (Height capped so card + controls fit comfortably above the fold) */}
-              <div className="bg-white rounded-3xl overflow-hidden shadow-md border border-[#EAE4DC] relative flex flex-col group transition duration-200">
-                {/* Photo & Overlay Header */}
-                <div className="relative h-80 sm:h-96 w-full bg-[#EAE4DC] overflow-hidden">
+            <div className="space-y-3 max-w-5xl mx-auto">
+              {/* Balanced Discovery Deck Card */}
+              <div className="bg-white rounded-3xl border border-[#EAE4DC] shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[460px] transition duration-200">
+                {/* Left Column: Deliberate image aspect ratio & capped height */}
+                <div className="md:col-span-5 relative bg-[#EAE4DC] min-h-[280px] md:min-h-[460px] flex flex-col justify-between overflow-hidden group">
                   <img
                     src={currentStackDog.photos[0]}
                     alt={currentStackDog.name}
-                    className="w-full h-full object-cover group-hover:scale-102 transition duration-500"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-102 transition duration-500"
                   />
-                  {/* Gentle gradient vignette for readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
+                  {/* Subtle gradient overlay for badges readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/35 pointer-events-none" />
 
                   {/* Top Badges */}
-                  <div className="absolute top-3.5 left-3.5 right-3.5 flex justify-between items-center pointer-events-auto">
+                  <div className="relative z-10 p-3.5 flex justify-between items-center pointer-events-auto">
                     <span className="bg-[#183B2B]/90 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-xs flex items-center space-x-1 shadow-xs">
                       <Building2 className="w-3 h-3 text-[#EDF4F0]" />
-                      <span className="truncate max-w-[140px] sm:max-w-[200px]">
+                      <span className="truncate max-w-[150px]">
                         {currentStackDog.shelterName || 'Shelter Partner'}
                       </span>
                     </span>
-
-                    {/* Match Score Badge */}
-                    {(() => {
-                      const match = calculateCompatibility(adopterPreferences, currentStackDog);
-                      return (
-                        <span
-                          className={`text-xs font-bold px-2.5 py-1 rounded-full shadow-xs backdrop-blur-xs ${
-                            match.hardConstraintFailed
-                              ? 'bg-[#B85438] text-white'
-                              : match.score >= 80
-                              ? 'bg-[#357457] text-white'
-                              : 'bg-white/95 text-[#181F1A]'
-                          }`}
-                        >
-                          {match.score}% Match
-                        </span>
-                      );
-                    })()}
+                    <span className="bg-white/95 text-[#181F1A] text-xs font-bold px-2.5 py-1 rounded-full shadow-xs">
+                      ${currentStackDog.adoptionFee}
+                    </span>
                   </div>
 
-                  {/* Bottom Dog Info Overlay */}
-                  <div className="absolute bottom-3.5 left-4 right-4 text-white space-y-1 pointer-events-auto">
-                    <div className="flex items-baseline justify-between">
-                      <div className="flex items-baseline space-x-2">
-                        <h2 className="text-2xl sm:text-3xl font-bold font-serif-heading tracking-tight">
-                          {currentStackDog.name}
-                        </h2>
-                        <span className="text-sm opacity-90 font-light">
-                          {currentStackDog.ageYears} yrs
-                        </span>
+                  {/* Bottom info on photo */}
+                  <div className="relative z-10 p-4 text-white space-y-0.5">
+                    <div className="flex items-center space-x-1.5 text-xs text-white/90">
+                      <MapPin className="w-3.5 h-3.5 text-[#EDF4F0] flex-shrink-0" />
+                      <span className="truncate">{currentStackDog.location}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Dog Details, Compatibility, and Primary Actions */}
+                <div className="md:col-span-7 p-6 sm:p-7 flex flex-col justify-between space-y-4">
+                  <div className="space-y-3.5">
+                    {/* Header: Name, Age, Breed, Match Badge */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-baseline space-x-2.5">
+                          <h2 className="text-2xl sm:text-3xl font-bold font-serif-heading text-[#181F1A] tracking-tight">
+                            {currentStackDog.name}
+                          </h2>
+                          <span className="text-sm font-medium text-[#58625B]">
+                            {currentStackDog.ageYears} {currentStackDog.ageYears === 1 ? 'yr' : 'yrs'} old
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm text-[#58625B] mt-0.5">
+                          {currentStackDog.breed} • <span className="capitalize">{currentStackDog.gender}</span>
+                        </p>
                       </div>
-                      <span className="text-xs font-bold bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded-lg">
-                        ${currentStackDog.adoptionFee}
-                      </span>
+
+                      {/* Compatibility Score */}
+                      {(() => {
+                        const match = calculateCompatibility(adopterPreferences, currentStackDog);
+                        return (
+                          <div className="flex flex-col items-end flex-shrink-0">
+                            <span
+                              className={`text-xs font-bold px-3 py-1 rounded-full border shadow-xs ${
+                                match.hardConstraintFailed
+                                  ? 'bg-[#FAF0EC] text-[#B85438] border-[#FCE8E2]'
+                                  : match.score >= 80
+                                  ? 'bg-[#EDF4F0] text-[#183B2B] border-[#D8F3DC]'
+                                  : 'bg-[#FAF7F2] text-[#24533E] border-[#EAE4DC]'
+                              }`}
+                            >
+                              {match.score}% Match
+                            </span>
+                            <span className="text-[10px] text-[#8B958E] mt-0.5 font-medium">
+                              {match.verdict}
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </div>
 
-                    <p className="text-xs text-gray-200 truncate">
-                      {currentStackDog.breed} • {currentStackDog.location}
-                    </p>
-
                     {/* Trait Pills */}
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      <span className="bg-white/20 backdrop-blur-xs text-[10px] px-2 py-0.5 rounded-full capitalize font-medium">
-                        {currentStackDog.energyLevel.replace('_', ' ')}
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="bg-[#FAF7F2] border border-[#EAE4DC] text-[#181F1A] text-[11px] font-semibold px-2.5 py-1 rounded-lg capitalize">
+                        {currentStackDog.energyLevel.replace('_', ' ')} Energy
                       </span>
-                      <span className="bg-white/20 backdrop-blur-xs text-[10px] px-2 py-0.5 rounded-full capitalize font-medium">
-                        {currentStackDog.size}
+                      <span className="bg-[#FAF7F2] border border-[#EAE4DC] text-[#181F1A] text-[11px] font-semibold px-2.5 py-1 rounded-lg capitalize">
+                        {currentStackDog.size} size
                       </span>
                       {currentStackDog.goodWith.cats && (
-                        <span className="bg-[#EDF4F0] text-[#183B2B] text-[10px] px-2 py-0.5 rounded-full font-bold">
-                          Cat-Safe
+                        <span className="bg-[#EDF4F0] border border-[#D8F3DC] text-[#183B2B] text-[11px] font-bold px-2.5 py-1 rounded-lg">
+                          ✓ Cat-Friendly
                         </span>
                       )}
                       {currentStackDog.goodWith.children && (
-                        <span className="bg-[#EDF4F0] text-[#183B2B] text-[10px] px-2 py-0.5 rounded-full font-bold">
-                          Kid-Safe
+                        <span className="bg-[#EDF4F0] border border-[#D8F3DC] text-[#183B2B] text-[11px] font-bold px-2.5 py-1 rounded-lg">
+                          ✓ Kid-Safe
+                        </span>
+                      )}
+                      {currentStackDog.goodWith.otherDogs && (
+                        <span className="bg-[#EDF4F0] border border-[#D8F3DC] text-[#183B2B] text-[11px] font-bold px-2.5 py-1 rounded-lg">
+                          ✓ Dog-Social
                         </span>
                       )}
                     </div>
+
+                    {/* Backstory Snippet */}
+                    <div className="bg-[#FAF7F2] border border-[#F2ECE4] rounded-2xl p-3.5 space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#8B958E] block">
+                        Personality & Story
+                      </span>
+                      <p className="text-xs text-[#58625B] leading-relaxed italic line-clamp-3">
+                        "{currentStackDog.backstory}"
+                      </p>
+                    </div>
+
+                    {/* Care Considerations & Requirements */}
+                    <div className="space-y-1 text-xs text-[#58625B]">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#8B958E] block">
+                        Care Considerations
+                      </span>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#58625B]">
+                        <span>
+                          • Daily Exercise: <strong className="text-[#181F1A]">{currentStackDog.minDailyExerciseHours}h/day</strong>
+                        </span>
+                        <span>
+                          • Dwelling: <strong className="text-[#181F1A] capitalize">{currentStackDog.spaceRequired.replace('_', ' ')}</strong>
+                        </span>
+                        <span>
+                          • Experience: <strong className="text-[#181F1A] capitalize">{currentStackDog.experienceLevelNeeded.replace('_', ' ')}</strong>
+                        </span>
+                        {currentStackDog.specialNeeds?.length > 0 && (
+                          <span className="text-[#B85438] font-semibold">
+                            • Special Care: {currentStackDog.specialNeeds.join(', ')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Primary Action Controls Bar: Visibly anchored and accessible without scrolling */}
+                  <div className="pt-3 border-t border-[#F2ECE4] flex flex-wrap items-center justify-between gap-2.5">
+                    {/* Secondary actions: Undo & View Details */}
+                    <div className="flex items-center space-x-2">
+                      <button
+                        disabled={activeStackIndex === 0}
+                        onClick={handleUndo}
+                        className={`p-2 rounded-xl border border-[#EAE4DC] flex items-center space-x-1.5 text-xs font-semibold transition ${
+                          activeStackIndex > 0
+                            ? 'bg-white text-[#58625B] hover:text-[#181F1A] hover:bg-[#FAF7F2]'
+                            : 'bg-gray-50 text-gray-300 cursor-not-allowed border-gray-200'
+                        }`}
+                        title="Undo last action (U or Z)"
+                        aria-label="Undo last action"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Undo</span>
+                      </button>
+
+                      <button
+                        onClick={() => onOpenDogModal(currentStackDog)}
+                        className="px-3 py-2 rounded-xl bg-white border border-[#EAE4DC] text-[#183B2B] hover:bg-[#FAF7F2] text-xs font-bold transition flex items-center space-x-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B]"
+                        title="View full profile and match breakdown (Enter)"
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                        <span>Profile</span>
+                      </button>
+                    </div>
+
+                    {/* Core Actions: Pass, Save, Like */}
+                    <div className="flex items-center space-x-2.5">
+                      {/* Pass Button */}
+                      <button
+                        onClick={handlePass}
+                        className="px-4 py-2.5 rounded-xl border border-[#EAE4DC] bg-white text-[#58625B] hover:text-[#B85438] hover:border-[#B85438] text-xs font-bold transition flex items-center space-x-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B85438]"
+                        title="Pass on this dog (←)"
+                        aria-label="Pass on this dog"
+                      >
+                        <X className="w-4 h-4 text-[#B85438]" />
+                        <span>Pass</span>
+                      </button>
+
+                      {/* Save Toggle Button */}
+                      {(() => {
+                        const isSaved = savedDogIds.includes(currentStackDog.id);
+                        return (
+                          <button
+                            onClick={() => onToggleSaveDog(currentStackDog.id)}
+                            className={`px-3.5 py-2.5 rounded-xl border text-xs font-bold transition flex items-center space-x-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
+                              isSaved
+                                ? 'bg-[#FAF0EC] border-[#B85438] text-[#B85438]'
+                                : 'bg-white border-[#EAE4DC] text-[#58625B] hover:text-[#181F1A] hover:bg-[#FAF7F2]'
+                            }`}
+                            title={isSaved ? 'Remove from saved' : 'Save dog for later'}
+                          >
+                            <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-[#B85438]' : ''}`} />
+                            <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
+                          </button>
+                        );
+                      })()}
+
+                      {/* Like Button */}
+                      <button
+                        onClick={handleLike}
+                        className="px-5 py-2.5 rounded-xl bg-[#183B2B] hover:bg-[#24533E] text-white text-xs font-bold transition shadow-xs flex items-center space-x-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B]"
+                        title="Like and connect (→)"
+                        aria-label="Like and connect"
+                      >
+                        <Heart className="w-4 h-4 fill-white text-white" />
+                        <span>Like & Connect</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                {/* Card Footer: Backstory snippet & modal trigger */}
-                <div className="p-3.5 bg-[#FAF7F2] border-t border-[#EAE4DC] flex items-center justify-between gap-2">
-                  <p className="text-xs text-[#58625B] line-clamp-1 italic flex-1">
-                    "{currentStackDog.backstory}"
-                  </p>
-                  <button
-                    onClick={() => onOpenDogModal(currentStackDog)}
-                    className="px-3 py-1.5 bg-white hover:bg-[#F2ECE4] text-[#183B2B] rounded-xl text-xs font-bold border border-[#EAE4DC] transition flex items-center space-x-1 flex-shrink-0"
-                  >
-                    <span>Profile</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
               </div>
 
-              {/* Action Controls Bar */}
-              <div className="flex items-center justify-center space-x-5 pt-1">
-                {/* Undo Button */}
-                <button
-                  disabled={activeStackIndex === 0}
-                  onClick={handleUndo}
-                  className={`w-11 h-11 rounded-full border border-[#EAE4DC] flex items-center justify-center transition shadow-xs ${
-                    activeStackIndex > 0
-                      ? 'bg-white text-[#58625B] hover:text-[#181F1A] hover:bg-[#F2ECE4]'
-                      : 'bg-gray-100 text-gray-300 cursor-not-allowed border-transparent'
-                  }`}
-                  title="Undo last swipe"
-                  aria-label="Undo last swipe"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-
-                {/* Pass Button (✕) */}
-                <button
-                  onClick={handlePass}
-                  className="w-14 h-14 rounded-full bg-white border border-[#EAE4DC] text-[#8B958E] hover:text-[#B85438] hover:border-[#B85438] hover:scale-105 flex items-center justify-center transition shadow-sm"
-                  title="Pass on this dog"
-                  aria-label="Pass"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-
-                {/* Full Details Modal Trigger */}
-                <button
-                  onClick={() => onOpenDogModal(currentStackDog)}
-                  className="w-11 h-11 rounded-full bg-white border border-[#EAE4DC] text-[#58625B] hover:text-[#183B2B] hover:border-[#183B2B] flex items-center justify-center transition shadow-xs"
-                  title="Read story and compatibility"
-                  aria-label="View details"
-                >
-                  <Info className="w-4 h-4" />
-                </button>
-
-                {/* Like / Save Button (♥) */}
-                <button
-                  onClick={handleLike}
-                  className="w-14 h-14 rounded-full bg-[#183B2B] text-white hover:bg-[#24533E] hover:scale-105 flex items-center justify-center transition shadow-md"
-                  title="Save and Like this dog"
-                  aria-label="Save and Like"
-                >
-                  <Heart className="w-6 h-6 fill-white" />
-                </button>
-              </div>
-
-              {/* Deck Counter & Keyboard Tips */}
-              <div className="flex justify-between items-center text-[11px] text-[#8B958E] px-2 pt-0.5">
+              {/* Deck Status & Keyboard navigation footer */}
+              <div className="flex justify-between items-center text-xs text-[#8B958E] px-2 max-w-5xl mx-auto">
                 <span>
-                  Dog {activeStackIndex + 1} of {filteredDogs.length}
+                  Dog {activeStackIndex + 1} of {filteredDogs.length} available
                 </span>
-                <span className="hidden sm:inline">
-                  Keyboard: ← Pass | → Like
+                <span className="hidden sm:inline text-[11px]">
+                  Shortcuts: <kbd className="px-1.5 py-0.5 bg-white border border-[#EAE4DC] rounded text-[#181F1A]">←</kbd> Pass • <kbd className="px-1.5 py-0.5 bg-white border border-[#EAE4DC] rounded text-[#181F1A]">→</kbd> Like • <kbd className="px-1.5 py-0.5 bg-white border border-[#EAE4DC] rounded text-[#181F1A]">U</kbd> Undo • <kbd className="px-1.5 py-0.5 bg-white border border-[#EAE4DC] rounded text-[#181F1A]">Enter</kbd> Profile
                 </span>
               </div>
             </div>
           ) : (
             /* Empty State */
-            <div className="text-center py-14 px-6 bg-white rounded-3xl border border-[#EAE4DC] max-w-sm w-full shadow-xs space-y-3">
+            <div className="text-center py-14 px-6 bg-white rounded-3xl border border-[#EAE4DC] max-w-sm mx-auto w-full shadow-xs space-y-3">
               <div className="w-16 h-16 rounded-full bg-[#EDF4F0] text-[#183B2B] flex items-center justify-center mx-auto">
                 <Sparkles className="w-8 h-8 text-[#357457]" />
               </div>

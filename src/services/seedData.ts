@@ -588,7 +588,7 @@ export const SEED_VISITS: ShelterVisit[] = [
     startTime: '11:00',
     endTime: '12:30',
     capacity: 8,
-    participantCount: 5,
+    participantCount: 4,
     status: 'upcoming',
     createdAt: '2026-10-15T10:00:00Z',
   },
@@ -619,16 +619,31 @@ export const SEED_VISITS: ShelterVisit[] = [
     date: '2026-11-14',
     startTime: '10:30',
     endTime: '12:00',
-    capacity: 10,
-    participantCount: 4,
+    capacity: 5,
+    participantCount: 5,
     status: 'upcoming',
     createdAt: '2026-10-17T09:30:00Z',
+  },
+  {
+    id: 'visit-st-sun-cancelled',
+    shelterId: 'shelter-sunny-tails',
+    shelterName: 'Sunny Tails Animal Sanctuary',
+    shelterAddress: '1520 Meadowview Lane, Portland, OR',
+    title: 'Outdoor Agility & Playfield Social',
+    description:
+      'Shelter yard maintenance and weather postponement. Pre-registered participants have been credited and contacted.',
+    date: '2026-11-22',
+    startTime: '13:00',
+    endTime: '14:30',
+    capacity: 8,
+    participantCount: 0,
+    status: 'cancelled',
+    createdAt: '2026-10-18T08:00:00Z',
   },
 ];
 
 export const SEED_VISIT_PARTICIPANTS: Record<string, { userId: string; userName: string; userEmail: string; registeredAt: string; status: 'confirmed' | 'cancelled' }[]> = {
   'visit-gp-sat-1': [
-    { userId: 'user-maya-lin', userName: 'Maya Lin', userEmail: 'maya.lin@example.com', registeredAt: '2026-10-20T10:00:00Z', status: 'confirmed' },
     { userId: 'user-alex-r', userName: 'Alex Rivera', userEmail: 'alex.r@example.com', registeredAt: '2026-10-21T11:20:00Z', status: 'confirmed' },
     { userId: 'user-chloe-t', userName: 'Chloe Tanaka', userEmail: 'chloe.t@example.com', registeredAt: '2026-10-22T14:05:00Z', status: 'confirmed' },
     { userId: 'user-liam-p', userName: 'Liam Patel', userEmail: 'liam.p@example.com', registeredAt: '2026-10-23T09:40:00Z', status: 'confirmed' },
@@ -643,7 +658,9 @@ export const SEED_VISIT_PARTICIPANTS: Record<string, { userId: string; userName:
     { userId: 'user-sara-j', userName: 'Sara Jenkins', userEmail: 'sara.j@example.com', registeredAt: '2026-10-20T11:00:00Z', status: 'confirmed' },
     { userId: 'user-tom-h', userName: 'Tom Henderson', userEmail: 'tom.h@example.com', registeredAt: '2026-10-21T16:20:00Z', status: 'confirmed' },
     { userId: 'user-rachel-z', userName: 'Rachel Zhao', userEmail: 'rachel.z@example.com', registeredAt: '2026-10-22T17:45:00Z', status: 'confirmed' },
+    { userId: 'user-carlos-m', userName: 'Carlos Mendez', userEmail: 'carlos.m@example.com', registeredAt: '2026-10-23T10:15:00Z', status: 'confirmed' },
   ],
+  'visit-st-sun-cancelled': [],
 };
 
 export const SEED_SAVED_DOGS: Record<string, string[]> = {

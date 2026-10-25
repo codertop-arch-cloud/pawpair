@@ -39,6 +39,18 @@
     font-family: 'Fraunces', Georgia, serif;
     letter-spacing: -0.02em;
   }
+
+  /* Accessible keyboard focus styling */
+  :focus-visible {
+    outline: 2px solid #183B2B;
+    outline-offset: 2px;
+  }
+
+  button:focus:not(:focus-visible),
+  [role="button"]:focus:not(:focus-visible),
+  input:focus:not(:focus-visible) {
+    outline: none;
+  }
 }
 
 /* Custom scrollbar */

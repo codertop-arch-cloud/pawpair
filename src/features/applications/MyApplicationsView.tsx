@@ -158,8 +158,22 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
               return (
                 <div
                   key={app.id}
-                  onClick={() => setSelectedAppId(app.id)}
-                  className={`p-3.5 rounded-2xl border transition cursor-pointer flex space-x-3 items-center ${
+                  id={`app-card-${app.id}`}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setSelectedAppId(app.id);
+                    if (window.innerWidth < 1024) {
+                      document.getElementById('application-detail-panel')?.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                      e.preventDefault();
+                      setSelectedAppId(app.id);
+                    }
+                  }}
+                  className={`p-3.5 rounded-2xl border transition cursor-pointer flex space-x-3 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#183B2B] ${
                     isSelected
                       ? 'bg-white border-[#183B2B] shadow-sm ring-2 ring-[#183B2B]/10'
                       : 'bg-white border-[#EAE4DC] hover:border-[#D5CEBF]'
@@ -197,24 +211,30 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
           </div>
 
           {/* Detail View Column */}
-          <div className="lg:col-span-7">
+          <div id="application-detail-panel" className="lg:col-span-7">
             {selectedApp && (
-              <div className="bg-white rounded-3xl border border-[#EAE4DC] p-5 sm:p-6 shadow-xs space-y-6">
+              <div className="bg-white rounded-3xl border border-[#EAE4DC] p-5 sm:p-7 shadow-xs space-y-6">
                 {/* Header Summary */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F2ECE4] gap-3">
-                  <div className="flex items-center space-x-3">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between pb-4 border-b border-[#F2ECE4] gap-3">
+                  <div className="flex items-start space-x-3.5">
                     <img
                       src={selectedApp.dogPhoto}
                       alt={selectedApp.dogName}
-                      className="w-14 h-14 rounded-2xl object-cover"
+                      className="w-16 h-16 rounded-2xl object-cover shadow-xs border border-[#EAE4DC]"
                     />
-                    <div>
-                      <h2 className="text-xl font-bold font-serif-heading text-[#181F1A]">
-                        {selectedApp.dogName}
-                      </h2>
-                      <p className="text-xs text-[#58625B]">
-                        Submitted {new Date(selectedApp.createdAt).toLocaleDateString()} by{' '}
-                        {selectedApp.applicantName}
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <h2 className="text-xl sm:text-2xl font-bold font-serif-heading text-[#181F1A]">
+                          {selectedApp.dogName}
+                        </h2>
+                      </div>
+                      <div className="flex items-center space-x-1.5 text-xs text-[#183B2B] font-semibold">
+                        <Building2 className="w-3.5 h-3.5 text-[#357457] flex-shrink-0" />
+                        <span>{selectedApp.shelterName}</span>
+                      </div>
+                      <p className="text-[11px] text-[#8B958E]">
+                        Submitted {new Date(selectedApp.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} by{' '}
+                        <strong className="text-[#58625B]">{selectedApp.applicantName}</strong>
                       </p>
                     </div>
                   </div>
@@ -224,50 +244,67 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
                     const Icon = badge.icon;
                     return (
                       <span
-                        className={`text-xs font-bold px-3 py-1 rounded-full border self-start sm:self-auto flex items-center space-x-1.5 ${badge.bg}`}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-full border self-start sm:self-auto flex items-center space-x-1.5 shadow-xs ${badge.bg}`}
                       >
-                        <Icon className="w-3.5 h-3.5" />
+                        <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                         <span>{badge.label}</span>
                       </span>
                     );
                   })()}
                 </div>
 
-                {/* Coordinator Note if present */}
-                {selectedApp.shelterNotes && (
-                  <div className="bg-[#EDF4F0]/70 border border-[#D8F3DC] rounded-2xl p-4 space-y-1">
-                    <span className="text-xs font-bold text-[#183B2B] flex items-center space-x-1.5">
-                      <MessageSquare className="w-3.5 h-3.5 text-[#357457]" />
-                      <span>Shelter Coordinator Update</span>
-                    </span>
+                {/* Latest Coordinator Update (Prominently displayed) */}
+                {selectedApp.shelterNotes ? (
+                  <div className="bg-[#EDF4F0] border border-[#D8F3DC] rounded-2xl p-4 space-y-1.5 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#183B2B] flex items-center space-x-1.5">
+                        <MessageSquare className="w-3.5 h-3.5 text-[#357457]" />
+                        <span>Latest Shelter Coordinator Update</span>
+                      </span>
+                      <span className="text-[10px] text-[#357457] font-medium">
+                        {new Date(selectedApp.updatedAt).toLocaleDateString()}
+                      </span>
+                    </div>
                     <p className="text-xs text-[#24533E] leading-relaxed">
                       {selectedApp.shelterNotes}
                     </p>
                   </div>
+                ) : (
+                  <div className="bg-[#FAF7F2] border border-[#EAE4DC] rounded-2xl p-3.5 text-xs text-[#58625B] flex items-center space-x-2">
+                    <Clock className="w-3.5 h-3.5 text-[#8B958E]" />
+                    <span>Application is queued for review by the shelter adoption coordinator.</span>
+                  </div>
                 )}
 
-                {/* Clean Timeline Stepper */}
+                {/* Audit & Review Timeline (Unclipped layout with solid spacing) */}
                 <div className="space-y-3">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#8B958E] block">
-                    Audit & Review Timeline
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#8B958E] block">
+                    Chronological Review Timeline
                   </span>
 
-                  <div className="space-y-3 relative pl-5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#EAE4DC]">
+                  <div className="space-y-3 relative pl-7 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#EAE4DC]">
                     {selectedApp.timeline.map((event, idx) => {
                       const isLatest = idx === selectedApp.timeline.length - 1;
                       return (
                         <div key={idx} className="relative">
+                          {/* Timeline Node Dot */}
                           <div
-                            className={`absolute -left-5 top-1 w-3.5 h-3.5 rounded-full border-2 bg-white ${
-                              isLatest ? 'border-[#183B2B] bg-[#183B2B]' : 'border-[#8B958E]'
+                            className={`absolute -left-7 top-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                              isLatest
+                                ? 'border-[#183B2B] bg-[#183B2B] text-white shadow-xs'
+                                : 'border-[#D5CEBF] bg-white text-[#8B958E]'
                             }`}
-                          />
-                          <div className="bg-[#FAF7F2] p-3 rounded-xl border border-[#F2ECE4] space-y-0.5 text-xs">
-                            <div className="flex justify-between items-baseline">
-                              <span className="font-bold text-[#181F1A] capitalize">
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                          </div>
+
+                          {/* Event Card */}
+                          <div className="bg-[#FAF7F2] p-3.5 rounded-2xl border border-[#F2ECE4] space-y-1 text-xs">
+                            <div className="flex justify-between items-baseline gap-2">
+                              <span className="font-bold text-[#181F1A] capitalize text-xs">
                                 {event.status.replace(/_/g, ' ')}
                               </span>
-                              <span className="text-[10px] text-[#8B958E]">
+                              <span className="text-[10px] text-[#8B958E] flex-shrink-0">
                                 {new Date(event.timestamp).toLocaleString(undefined, {
                                   month: 'short',
                                   day: 'numeric',
@@ -276,10 +313,11 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
                                 })}
                               </span>
                             </div>
-                            <p className="text-[#58625B] text-xs">{event.note}</p>
-                            <span className="text-[10px] text-[#8B958E] italic block">
-                              Recorded by {event.actorName}
-                            </span>
+                            <p className="text-[#58625B] text-xs leading-relaxed">{event.note}</p>
+                            <div className="flex items-center space-x-1 pt-0.5 text-[10px] text-[#8B958E]">
+                              <User className="w-3 h-3 text-[#8B958E]" />
+                              <span>Recorded by {event.actorName}</span>
+                            </div>
                           </div>
                         </div>
                       );
@@ -288,41 +326,46 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
                 </div>
 
                 {/* Application Details Grid */}
-                <div className="bg-[#FAF7F2] rounded-2xl p-4 border border-[#EAE4DC] space-y-2 text-xs">
+                <div className="bg-[#FAF7F2] rounded-2xl p-4 sm:p-5 border border-[#EAE4DC] space-y-3 text-xs">
                   <span className="font-bold text-[#181F1A] text-xs uppercase tracking-wider block">
-                    Application Details On File
+                    Applicant Information On File
                   </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[#58625B]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[#58625B]">
                     <div>
-                      <span className="font-semibold text-[#181F1A]">Contact:</span> {selectedApp.applicantPhone}
+                      <span className="font-semibold text-[#181F1A] block">Contact Phone:</span>
+                      <span>{selectedApp.applicantPhone}</span>
                     </div>
                     <div>
-                      <span className="font-semibold text-[#181F1A]">Housing:</span>{' '}
-                      {selectedApp.housingType.replace('_', ' ')} ({selectedApp.hasYard ? 'Fenced Yard' : 'No Yard'})
+                      <span className="font-semibold text-[#181F1A] block">Housing Type:</span>
+                      <span className="capitalize">{selectedApp.housingType.replace(/_/g, ' ')} ({selectedApp.hasYard ? 'Fenced Yard' : 'No Private Yard'})</span>
                     </div>
                     <div>
-                      <span className="font-semibold text-[#181F1A]">Alone Time:</span> {selectedApp.hoursAlonePerDay} hrs / day
+                      <span className="font-semibold text-[#181F1A] block">Daily Alone Time:</span>
+                      <span>{selectedApp.hoursAlonePerDay} hours per day</span>
                     </div>
                     <div>
-                      <span className="font-semibold text-[#181F1A]">Vet Ref:</span>{' '}
-                      {selectedApp.vetReference?.clinicName || 'None'}
+                      <span className="font-semibold text-[#181F1A] block">Veterinary Clinic Reference:</span>
+                      <span>{selectedApp.vetReference?.clinicName ? `${selectedApp.vetReference.clinicName} (${selectedApp.vetReference.phone})` : 'None Provided'}</span>
                     </div>
                   </div>
-                  <div className="pt-1 text-[#58625B]">
-                    <span className="font-semibold text-[#181F1A]">Motivation:</span>{' '}
-                    <span className="italic">"{selectedApp.reasonForAdopting}"</span>
+                  <div className="pt-2 border-t border-[#F2ECE4] text-[#58625B]">
+                    <span className="font-semibold text-[#181F1A] block mb-0.5">Adoption Motivation:</span>
+                    <p className="italic bg-white/70 p-2.5 rounded-xl border border-[#EAE4DC] text-xs leading-relaxed">
+                      "{selectedApp.reasonForAdopting}"
+                    </p>
                   </div>
                 </div>
 
-                {/* Actions */}
+                {/* Footer Actions */}
                 <div className="flex items-center justify-between pt-2 border-t border-[#F2ECE4]">
                   <span className="text-[10px] text-[#8B958E]">
-                    ID: {selectedApp.id}
+                    Ref: {selectedApp.id}
                   </span>
                   {selectedApp.status !== 'withdrawn' && selectedApp.status !== 'rejected' && (
                     <button
+                      type="button"
                       onClick={() => handleWithdraw(selectedApp.id)}
-                      className="text-xs font-semibold text-[#B85438] hover:underline"
+                      className="text-xs font-semibold text-[#B85438] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B85438] rounded-md px-1"
                     >
                       Withdraw Application
                     </button>
