@@ -43,6 +43,7 @@ export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
   const [onlyHighCompatibility, setOnlyHighCompatibility] = useState(false);
   const [mustBeCatSafe, setMustBeCatSafe] = useState(false);
   const [mustBeKidSafe, setMustBeKidSafe] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Card stack state
   const [activeStackIndex, setActiveStackIndex] = useState(0);
@@ -180,17 +181,13 @@ export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-6">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-[#EDF4F0] text-[#183B2B] text-[11px] font-semibold mb-1.5">
-            <Sparkles className="w-3 h-3 text-[#357457]" />
-            <span>Personality-First Dog Discovery</span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-serif-heading text-[#181F1A] tracking-tight">
             Discover Companions
           </h1>
           <p className="text-xs sm:text-sm text-[#58625B] max-w-xl mt-0.5">
-            Find rescue dogs whose temperament, energy, and routine align with your home.
+            Rescue dogs matched to your lifestyle, living space, and daily routine.
           </p>
         </div>
 
@@ -223,131 +220,166 @@ export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
         </div>
       </div>
 
-      {/* Unified Search & Filter Toolbar */}
-      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-[#EAE4DC] shadow-xs space-y-3">
-        {/* Search Input Row */}
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B958E]" />
-          <input
-            type="text"
-            placeholder="Search by name, breed, shelter, or city..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setActiveStackIndex(0);
-            }}
-            className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FAF7F2] border border-[#EAE4DC] text-xs text-[#181F1A] placeholder:text-[#8B958E] focus:outline-none focus:border-[#183B2B] transition"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8B958E] hover:text-[#181F1A]"
-            >
-              Clear
-            </button>
-          )}
+      {/* Streamlined Search & Filter Bar */}
+      <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-[#EAE4DC] shadow-xs space-y-2.5">
+        <div className="flex items-center gap-2">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B958E]" />
+            <input
+              type="text"
+              placeholder="Search by name, breed, shelter, or city..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setActiveStackIndex(0);
+              }}
+              className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FAF7F2] border border-[#EAE4DC] text-xs text-[#181F1A] placeholder:text-[#8B958E] focus:outline-none focus:border-[#183B2B] transition"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8B958E] hover:text-[#181F1A]"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Toggle Filter Button */}
+          {(() => {
+            const activeCount =
+              (filterSize !== 'all' ? 1 : 0) +
+              (filterEnergy !== 'all' ? 1 : 0) +
+              (filterAge !== 'all' ? 1 : 0) +
+              (onlyHighCompatibility ? 1 : 0) +
+              (mustBeCatSafe ? 1 : 0) +
+              (mustBeKidSafe ? 1 : 0);
+
+            return (
+              <button
+                id="btn-toggle-filters"
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition ${
+                  showFilters || activeCount > 0
+                    ? 'bg-[#183B2B] text-white border-[#183B2B]'
+                    : 'bg-[#FAF7F2] text-[#58625B] border-[#EAE4DC] hover:text-[#181F1A] hover:bg-[#F2ECE4]'
+                }`}
+              >
+                <Filter className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Filters</span>
+                {activeCount > 0 && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${showFilters ? 'bg-white text-[#183B2B]' : 'bg-[#183B2B] text-white'}`}>
+                    {activeCount}
+                  </span>
+                )}
+              </button>
+            );
+          })()}
         </div>
 
-        {/* Filter Chips Bar */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#F2ECE4] text-xs">
-          {/* Quick Selects */}
-          <select
-            value={filterSize}
-            onChange={(e) => {
-              setFilterSize(e.target.value as any);
-              setActiveStackIndex(0);
-            }}
-            className="bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl px-2.5 py-1 text-xs text-[#181F1A] font-medium focus:outline-none focus:border-[#183B2B]"
-          >
-            <option value="all">All Sizes</option>
-            <option value="small">Small (&lt; 25 lbs)</option>
-            <option value="medium">Medium (25-55 lbs)</option>
-            <option value="large">Large (55-85 lbs)</option>
-            <option value="giant">Giant (85+ lbs)</option>
-          </select>
-
-          <select
-            value={filterEnergy}
-            onChange={(e) => {
-              setFilterEnergy(e.target.value as any);
-              setActiveStackIndex(0);
-            }}
-            className="bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl px-2.5 py-1 text-xs text-[#181F1A] font-medium focus:outline-none focus:border-[#183B2B]"
-          >
-            <option value="all">All Energies</option>
-            <option value="low">Low Energy</option>
-            <option value="moderate">Moderate Energy</option>
-            <option value="high">High Energy</option>
-            <option value="very_high">Very High Energy</option>
-          </select>
-
-          <select
-            value={filterAge}
-            onChange={(e) => {
-              setFilterAge(e.target.value as any);
-              setActiveStackIndex(0);
-            }}
-            className="bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl px-2.5 py-1 text-xs text-[#181F1A] font-medium focus:outline-none focus:border-[#183B2B]"
-          >
-            <option value="all">All Ages</option>
-            <option value="puppy">Puppy</option>
-            <option value="young">Young</option>
-            <option value="adult">Adult</option>
-            <option value="senior">Senior</option>
-          </select>
-
-          {/* Quick Toggles */}
-          <button
-            onClick={() => {
-              setOnlyHighCompatibility(!onlyHighCompatibility);
-              setActiveStackIndex(0);
-            }}
-            className={`px-2.5 py-1 rounded-xl border text-xs font-medium transition ${
-              onlyHighCompatibility
-                ? 'bg-[#183B2B] text-white border-[#183B2B]'
-                : 'bg-[#FAF7F2] text-[#58625B] border-[#EAE4DC] hover:border-[#D5CEBF]'
-            }`}
-          >
-            High Match (&gt;80%)
-          </button>
-
-          <button
-            onClick={() => {
-              setMustBeCatSafe(!mustBeCatSafe);
-              setActiveStackIndex(0);
-            }}
-            className={`px-2.5 py-1 rounded-xl border text-xs font-medium transition ${
-              mustBeCatSafe
-                ? 'bg-[#183B2B] text-white border-[#183B2B]'
-                : 'bg-[#FAF7F2] text-[#58625B] border-[#EAE4DC] hover:border-[#D5CEBF]'
-            }`}
-          >
-            Cat-Friendly
-          </button>
-
-          <button
-            onClick={() => {
-              setMustBeKidSafe(!mustBeKidSafe);
-              setActiveStackIndex(0);
-            }}
-            className={`px-2.5 py-1 rounded-xl border text-xs font-medium transition ${
-              mustBeKidSafe
-                ? 'bg-[#183B2B] text-white border-[#183B2B]'
-                : 'bg-[#FAF7F2] text-[#58625B] border-[#EAE4DC] hover:border-[#D5CEBF]'
-            }`}
-          >
-            Kid-Safe
-          </button>
-
-          {hasActiveFilters && (
-            <button
-              onClick={resetAllFilters}
-              className="text-[#B85438] hover:underline font-semibold ml-auto text-xs"
+        {/* Collapsible Filter Chips Row */}
+        {showFilters && (
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#F2ECE4] text-xs animate-in fade-in duration-150">
+            {/* Quick Selects */}
+            <select
+              value={filterSize}
+              onChange={(e) => {
+                setFilterSize(e.target.value as any);
+                setActiveStackIndex(0);
+              }}
+              className="bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl px-2.5 py-1 text-xs text-[#181F1A] font-medium focus:outline-none focus:border-[#183B2B]"
             >
-              Reset filters
+              <option value="all">All Sizes</option>
+              <option value="small">Small (&lt; 25 lbs)</option>
+              <option value="medium">Medium (25-55 lbs)</option>
+              <option value="large">Large (55-85 lbs)</option>
+              <option value="giant">Giant (85+ lbs)</option>
+            </select>
+
+            <select
+              value={filterEnergy}
+              onChange={(e) => {
+                setFilterEnergy(e.target.value as any);
+                setActiveStackIndex(0);
+              }}
+              className="bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl px-2.5 py-1 text-xs text-[#181F1A] font-medium focus:outline-none focus:border-[#183B2B]"
+            >
+              <option value="all">All Energies</option>
+              <option value="low">Low Energy</option>
+              <option value="moderate">Moderate Energy</option>
+              <option value="high">High Energy</option>
+              <option value="very_high">Very High Energy</option>
+            </select>
+
+            <select
+              value={filterAge}
+              onChange={(e) => {
+                setFilterAge(e.target.value as any);
+                setActiveStackIndex(0);
+              }}
+              className="bg-[#FAF7F2] border border-[#EAE4DC] rounded-xl px-2.5 py-1 text-xs text-[#181F1A] font-medium focus:outline-none focus:border-[#183B2B]"
+            >
+              <option value="all">All Ages</option>
+              <option value="puppy">Puppy</option>
+              <option value="young">Young</option>
+              <option value="adult">Adult</option>
+              <option value="senior">Senior</option>
+            </select>
+
+            {/* Quick Toggles */}
+            <button
+              onClick={() => {
+                setOnlyHighCompatibility(!onlyHighCompatibility);
+                setActiveStackIndex(0);
+              }}
+              className={`px-2.5 py-1 rounded-xl border text-xs font-medium transition ${
+                onlyHighCompatibility
+                  ? 'bg-[#183B2B] text-white border-[#183B2B]'
+                  : 'bg-[#FAF7F2] text-[#58625B] border-[#EAE4DC] hover:border-[#D5CEBF]'
+              }`}
+            >
+              High Match (&gt;80%)
             </button>
-          )}
-        </div>
+
+            <button
+              onClick={() => {
+                setMustBeCatSafe(!mustBeCatSafe);
+                setActiveStackIndex(0);
+              }}
+              className={`px-2.5 py-1 rounded-xl border text-xs font-medium transition ${
+                mustBeCatSafe
+                  ? 'bg-[#183B2B] text-white border-[#183B2B]'
+                  : 'bg-[#FAF7F2] text-[#58625B] border-[#EAE4DC] hover:border-[#D5CEBF]'
+              }`}
+            >
+              Cat-Friendly
+            </button>
+
+            <button
+              onClick={() => {
+                setMustBeKidSafe(!mustBeKidSafe);
+                setActiveStackIndex(0);
+              }}
+              className={`px-2.5 py-1 rounded-xl border text-xs font-medium transition ${
+                mustBeKidSafe
+                  ? 'bg-[#183B2B] text-white border-[#183B2B]'
+                  : 'bg-[#FAF7F2] text-[#58625B] border-[#EAE4DC] hover:border-[#D5CEBF]'
+              }`}
+            >
+              Kid-Safe
+            </button>
+
+            {hasActiveFilters && (
+              <button
+                onClick={resetAllFilters}
+                className="text-[#B85438] hover:underline font-semibold ml-auto text-xs"
+              >
+                Reset filters
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* VIEW 1: TINDER-STYLE DECK VIEW (Balanced desktop layout: photo on one side, profile & actions on the other) */}

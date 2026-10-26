@@ -216,24 +216,6 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
             </p>
           </div>
         </div>
-
-        {/* Demo Switcher Callout if viewing as adopter */}
-        {currentUser.role !== 'shelter_staff' && (
-          <div className="bg-[#FAF0EC] border border-[#FCE8E2] px-3 py-2 rounded-xl text-xs flex items-center justify-between gap-3 w-full md:w-auto">
-            <span className="text-[#963F28]">
-              Logged in as Adopter ({currentUser.fullName}). Switch to Elena Vance to test staff workflows.
-            </span>
-            <button
-              onClick={() => {
-                const staffUser = availableUsers.find((u) => u.role === 'shelter_staff');
-                if (staffUser) onSwitchUser(staffUser);
-              }}
-              className="px-3 py-1 bg-[#B85438] text-white rounded-lg font-bold text-xs hover:bg-[#963F28] transition flex-shrink-0"
-            >
-              Switch to Elena (Staff)
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Metrics Row */}

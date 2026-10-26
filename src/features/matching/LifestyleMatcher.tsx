@@ -96,15 +96,11 @@ export const LifestyleMatcher: React.FC<LifestyleMatcherProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-[#EAE4DC]">
         <div>
-          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-[#EDF4F0] text-[#183B2B] text-[11px] font-semibold mb-1.5">
-            <Sparkles className="w-3 h-3 text-[#357457]" />
-            <span>Deterministic Matching Engine</span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-serif-heading text-[#181F1A] tracking-tight">
             Lifestyle Compatibility Matcher
           </h1>
           <p className="text-xs sm:text-sm text-[#58625B] max-w-2xl mt-0.5">
-            Explainable animal welfare matching based on documented behavioral requirements.
+            Personalized rescue dog recommendations based on your living space, activity level, and care preferences.
           </p>
         </div>
 

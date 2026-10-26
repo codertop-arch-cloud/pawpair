@@ -104,10 +104,6 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 border-b border-[#EAE4DC]">
         <div>
-          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-[#EDF4F0] text-[#183B2B] text-[11px] font-semibold mb-1.5">
-            <ShieldCheck className="w-3 h-3 text-[#357457]" />
-            <span>Adoption Pipeline Tracker</span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-serif-heading text-[#181F1A] tracking-tight">
             Adoption Applications
           </h1>

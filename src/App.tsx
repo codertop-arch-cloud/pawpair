@@ -273,8 +273,8 @@ export function App() {
         </div>
 
         <div className="max-w-6xl mx-auto pt-6 mt-6 border-t border-[#F2ECE4] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#8B958E]">
-          <span>© 2026 PawPair Platform. Built for end-term software engineering evaluation.</span>
-          <span>Warm editorial aesthetics • Animal welfare priority</span>
+          <span>© 2026 PawPair Platform. All rights reserved.</span>
+          <span>Compassionate companion adoption • Animal welfare priority</span>
         </div>
       </footer>
     </div>

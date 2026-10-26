@@ -95,30 +95,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-[#FAF7F2]/95 backdrop-blur-md border-b border-[#EAE4DC] transition-colors">
-      {/* Subtle Utility Bar */}
-      <div className="bg-[#F4EFEA]/80 border-b border-[#EAE4DC]/60 px-4 sm:px-6 lg:px-8 py-1.5 text-[11px] text-[#58625B] flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#357457] inline-block"></span>
-          <span>
-            <strong className="text-[#181F1A] font-semibold">Demo Sandbox:</strong> Persistent local storage active
-          </span>
-          <span className="hidden md:inline text-[#8B958E]">•</span>
-          <span className="hidden md:inline">
-            Active Persona: <strong className="text-[#181F1A]">{currentUser.fullName}</strong> ({currentUser.role === 'shelter_staff' ? 'Shelter Director' : 'Adopter'})
-          </span>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={onResetDemoData}
-            title="Reset data store to original sample dogs and applications"
-            className="text-[11px] font-medium text-[#58625B] hover:text-[#183B2B] flex items-center space-x-1 transition"
-          >
-            <RotateCcw className="w-3 h-3 text-[#8B958E]" />
-            <span>Reset Demo Data</span>
-          </button>
-        </div>
-      </div>
-
       {/* Main Navigation Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -265,8 +241,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ))}
                   </div>
 
-                  <div className="px-4 py-2 border-t border-[#F4EFEA] bg-[#FAF7F2]/50 text-[10px] text-[#8B958E] text-center">
-                    Press <kbd className="bg-white border border-[#EAE4DC] px-1 py-0.5 rounded text-[9px]">Esc</kbd> or click outside to dismiss
+                  <div className="px-4 py-2 border-t border-[#F4EFEA] bg-[#FAF7F2]/50 flex items-center justify-between text-[10px] text-[#8B958E]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        onResetDemoData();
+                      }}
+                      className="hover:text-[#B85438] flex items-center space-x-1 transition font-medium"
+                    >
+                      <RotateCcw className="w-3 h-3 text-[#8B958E]" />
+                      <span>Reset Sample Data</span>
+                    </button>
+                    <span>Esc to dismiss</span>
                   </div>
                 </div>
               )}
