@@ -75,6 +75,9 @@ export interface UserProfile {
   avatarUrl?: string;
   phone?: string;
   city?: string;
+  password?: string;
+  bio?: string;
+  createdAt?: string;
 }
 
 export interface AdopterLifestylePreferences {

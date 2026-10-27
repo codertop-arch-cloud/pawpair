@@ -132,31 +132,139 @@ class LocalDataStore {
     }
   }
 
-  // --- Current User / Demo Role ---
-  public getCurrentUser(): UserProfile {
+  // --- Current User & Authentication ---
+  public getCurrentUser(): UserProfile | null {
     try {
       const data = storage.getItem(STORAGE_KEYS.CURRENT_USER);
+      if (data === 'null') return null;
       return data ? JSON.parse(data) : SEED_USERS[0];
     } catch {
       return SEED_USERS[0];
     }
   }
 
-  public setCurrentUser(user: UserProfile): void {
+  public setCurrentUser(user: UserProfile | null): void {
     try {
-      storage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+      if (user === null) {
+        storage.setItem(STORAGE_KEYS.CURRENT_USER, 'null');
+      } else {
+        storage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+      }
     } catch (err) {
       console.error('Failed to save current user', err);
     }
   }
 
-  public getAllDemoUsers(): UserProfile[] {
+  public getAllUsers(): UserProfile[] {
     try {
       const data = storage.getItem(STORAGE_KEYS.USERS);
       return data ? JSON.parse(data) : SEED_USERS;
     } catch {
       return SEED_USERS;
     }
+  }
+
+  public getAllDemoUsers(): UserProfile[] {
+    return this.getAllUsers();
+  }
+
+  public registerUser(params: {
+    fullName: string;
+    email: string;
+    password?: string;
+    role: 'adopter' | 'shelter_staff';
+    city?: string;
+    phone?: string;
+    shelterId?: string;
+    avatarUrl?: string;
+    bio?: string;
+  }): { success: boolean; user?: UserProfile; error?: string } {
+    try {
+      const trimmedEmail = params.email.trim().toLowerCase();
+      if (!trimmedEmail) {
+        return { success: false, error: 'Email address is required.' };
+      }
+      if (!params.fullName.trim()) {
+        return { success: false, error: 'Full name is required.' };
+      }
+
+      const users = this.getAllUsers();
+      const existingUser = users.find((u) => u.email.toLowerCase() === trimmedEmail);
+      if (existingUser) {
+        return {
+          success: false,
+          error: 'An account with this email address already exists. Please log in instead.',
+        };
+      }
+
+      const defaultAvatar =
+        params.avatarUrl?.trim() ||
+        (params.role === 'shelter_staff'
+          ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80'
+          : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80');
+
+      const newUser: UserProfile = {
+        id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        fullName: params.fullName.trim(),
+        email: trimmedEmail,
+        password: params.password,
+        role: params.role,
+        city: params.city?.trim() || 'Seattle, WA',
+        phone: params.phone?.trim() || '(555) 000-0000',
+        shelterId:
+          params.role === 'shelter_staff'
+            ? params.shelterId || 'shelter-green-paws'
+            : undefined,
+        avatarUrl: defaultAvatar,
+        bio: params.bio,
+        createdAt: new Date().toISOString(),
+      };
+
+      const updatedUsers = [...users, newUser];
+      storage.setItem(STORAGE_KEYS.USERS, JSON.stringify(updatedUsers));
+      this.setCurrentUser(newUser);
+
+      return { success: true, user: newUser };
+    } catch (err) {
+      console.error('Failed to register user', err);
+      return { success: false, error: 'Registration failed due to storage error.' };
+    }
+  }
+
+  public loginUser(
+    email: string,
+    password?: string
+  ): { success: boolean; user?: UserProfile; error?: string } {
+    try {
+      const trimmedEmail = email.trim().toLowerCase();
+      if (!trimmedEmail) {
+        return { success: false, error: 'Email address is required.' };
+      }
+
+      const users = this.getAllUsers();
+      const user = users.find((u) => u.email.toLowerCase() === trimmedEmail);
+
+      if (!user) {
+        return {
+          success: false,
+          error: 'No account found with this email. Please check your spelling or register a new profile.',
+        };
+      }
+
+      if (user.password && password && user.password !== password) {
+        return { success: false, error: 'Incorrect password. Please try again.' };
+      }
+
+      this.setCurrentUser(user);
+      return { success: true, user };
+    } catch (err) {
+      console.error('Failed to log in user', err);
+      return { success: false, error: 'Login failed due to storage error.' };
+    }
+  }
+
+  public logoutUser(): void {
+    this.setCurrentUser(null);
   }
 
   // --- Dogs ---
@@ -413,13 +521,10 @@ class LocalDataStore {
     }
   }
 
-  /**
-   * Returns participant roster ONLY to authorized shelter staff or administrators.
-   * Adopters receive an empty list to protect attendee privacy.
-   */
+  // only shelter staff can see the participant list
   public getVisitParticipants(visitId: string, requester?: UserProfile): VisitParticipant[] {
     const caller = requester || this.getCurrentUser();
-    if (caller.role !== 'shelter_staff') {
+    if (!caller || caller.role !== 'shelter_staff') {
       return [];
     }
 

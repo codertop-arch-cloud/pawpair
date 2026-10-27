@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { SavedDogsDrawer } from './components/SavedDogsDrawer';
+import { AuthModal } from './components/AuthModal';
 import { DogDiscoveryView } from './features/discovery/DogDiscoveryView';
 import { DogDetailModal } from './features/discovery/DogDetailModal';
 import { LifestyleMatcher } from './features/matching/LifestyleMatcher';
@@ -17,16 +18,19 @@ import {
   ShelterVisit,
   AdopterLifestylePreferences,
 } from './types';
-import { Sparkles, ShieldCheck, Building2, X } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 
 export function App() {
   // Navigation & current view
   const [currentTab, setCurrentTab] = useState<string>('discover');
 
-  // Core entities state
-  const [currentUser, setCurrentUser] = useState<UserProfile>(() => dataStore.getCurrentUser());
-  const [availableUsers, setAvailableUsers] = useState<UserProfile[]>(() =>
-    dataStore.getAllDemoUsers()
+  // Auth modal state
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+
+  // Core entities state — currentUser may be null (logged out)
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() =>
+    dataStore.getCurrentUser()
   );
   const [dogs, setDogs] = useState<Dog[]>(() => dataStore.getDogs());
   const [shelters, setShelters] = useState<Shelter[]>(() => dataStore.getShelters());
@@ -35,10 +39,10 @@ export function App() {
   );
   const [visits, setVisits] = useState<ShelterVisit[]>(() => dataStore.getVisits());
   const [adopterPreferences, setAdopterPreferences] = useState<AdopterLifestylePreferences | null>(
-    () => dataStore.getAdopterPreferences(currentUser.id)
+    () => (currentUser ? dataStore.getAdopterPreferences(currentUser.id) : null)
   );
   const [savedDogIds, setSavedDogIds] = useState<string[]>(() =>
-    dataStore.getSavedDogIds(currentUser.id)
+    currentUser ? dataStore.getSavedDogIds(currentUser.id) : []
   );
 
   // Modals state
@@ -48,16 +52,17 @@ export function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Synchronize state when currentUser changes
-  const refreshUserData = (user: UserProfile) => {
+  const refreshUserData = (user: UserProfile | null) => {
     setCurrentUser(user);
-    dataStore.setCurrentUser(user);
-    setAdopterPreferences(dataStore.getAdopterPreferences(user.id));
-    setSavedDogIds(dataStore.getSavedDogIds(user.id));
-  };
-
-  const handleSwitchUser = (user: UserProfile) => {
-    refreshUserData(user);
-    showToast(`Switched active persona to ${user.fullName} (${user.role.replace('_', ' ')})`);
+    if (user) {
+      dataStore.setCurrentUser(user);
+      setAdopterPreferences(dataStore.getAdopterPreferences(user.id));
+      setSavedDogIds(dataStore.getSavedDogIds(user.id));
+    } else {
+      dataStore.setCurrentUser(null);
+      setAdopterPreferences(null);
+      setSavedDogIds([]);
+    }
   };
 
   const refreshAllData = () => {
@@ -65,8 +70,10 @@ export function App() {
     setShelters(dataStore.getShelters());
     setApplications(dataStore.getApplications());
     setVisits(dataStore.getVisits());
-    setSavedDogIds(dataStore.getSavedDogIds(currentUser.id));
-    setAdopterPreferences(dataStore.getAdopterPreferences(currentUser.id));
+    if (currentUser) {
+      setSavedDogIds(dataStore.getSavedDogIds(currentUser.id));
+      setAdopterPreferences(dataStore.getAdopterPreferences(currentUser.id));
+    }
   };
 
   const showToast = (msg: string) => {
@@ -76,8 +83,54 @@ export function App() {
     }, 3500);
   };
 
-  // Toggle Save / Like Dog
+  // ---- Auth handlers ----
+  const handleLogin = (
+    email: string,
+    password?: string
+  ): { success: boolean; error?: string } => {
+    const result = dataStore.loginUser(email, password);
+    if (result.success && result.user) {
+      refreshUserData(result.user);
+      showToast(`Welcome back, ${result.user.fullName.split(' ')[0]}! 👋`);
+    }
+    return { success: result.success, error: result.error };
+  };
+
+  const handleRegister = (params: {
+    fullName: string;
+    email: string;
+    password?: string;
+    role: 'adopter' | 'shelter_staff';
+    city?: string;
+    phone?: string;
+    shelterId?: string;
+  }): { success: boolean; error?: string } => {
+    const result = dataStore.registerUser(params);
+    if (result.success && result.user) {
+      refreshUserData(result.user);
+      showToast(`Welcome to PawPair, ${result.user.fullName.split(' ')[0]}! 🐾`);
+    }
+    return { success: result.success, error: result.error };
+  };
+
+  const handleLogout = () => {
+    dataStore.logoutUser();
+    refreshUserData(null);
+    setCurrentTab('discover');
+    showToast('You have been signed out.');
+  };
+
+  const handleOpenAuth = (mode: 'login' | 'register' = 'login') => {
+    setAuthModalMode(mode);
+    setAuthModalOpen(true);
+  };
+
+  // Toggle Save / Like Dog — require login
   const handleToggleSaveDog = (dogId: string) => {
+    if (!currentUser) {
+      handleOpenAuth('login');
+      return;
+    }
     const isNowSaved = dataStore.toggleSaveDog(currentUser.id, dogId);
     setSavedDogIds(dataStore.getSavedDogIds(currentUser.id));
     const target = dataStore.getDogById(dogId);
@@ -93,7 +146,8 @@ export function App() {
       )
     ) {
       dataStore.resetAllToSeed();
-      refreshUserData(dataStore.getCurrentUser());
+      const restoredUser = dataStore.getCurrentUser();
+      refreshUserData(restoredUser);
       refreshAllData();
       showToast('Demo data restored to initial state.');
     }
@@ -101,6 +155,7 @@ export function App() {
 
   // Save Preferences
   const handleSavePreferences = (prefs: AdopterLifestylePreferences) => {
+    if (!currentUser) return;
     dataStore.saveAdopterPreferences(currentUser.id, prefs);
     setAdopterPreferences(prefs);
     showToast('Adopter lifestyle profile saved successfully!');
@@ -114,9 +169,11 @@ export function App() {
   };
 
   const savedDogsList = dogs.filter((d) => savedDogIds.includes(d.id));
-  const userApplicationsCount = applications.filter(
-    (a) => a.adopterId === currentUser.id || currentUser.role === 'shelter_staff'
-  ).length;
+  const userApplicationsCount = currentUser
+    ? applications.filter(
+        (a) => a.adopterId === currentUser.id || currentUser.role === 'shelter_staff'
+      ).length
+    : 0;
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-[#181F1A] flex flex-col font-sans selection:bg-[#EDF4F0] selection:text-[#183B2B]">
@@ -140,12 +197,17 @@ export function App() {
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         currentUser={currentUser}
-        availableUsers={availableUsers}
-        onSwitchUser={handleSwitchUser}
+        demoUsers={dataStore.getAllDemoUsers()}
         savedDogsCount={savedDogIds.length}
         onOpenSavedDogs={() => setIsSavedDrawerOpen(true)}
         onResetDemoData={handleResetDemoData}
         applicationsCount={userApplicationsCount}
+        onOpenAuth={handleOpenAuth}
+        onLogout={handleLogout}
+        onSwitchDemoUser={(user) => {
+          refreshUserData(user);
+          showToast(`Switched to ${user.fullName} (${user.role === 'shelter_staff' ? 'Staff' : 'Adopter'})`);
+        }}
       />
 
       {/* Main App Content Viewport */}
@@ -170,7 +232,7 @@ export function App() {
           />
         )}
 
-        {currentTab === 'applications' && (
+        {currentTab === 'applications' && currentUser && (
           <MyApplicationsView
             applications={applications}
             currentUser={currentUser}
@@ -179,7 +241,21 @@ export function App() {
           />
         )}
 
-        {currentTab === 'visits' && (
+        {currentTab === 'applications' && !currentUser && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 text-center px-4">
+            <div className="text-5xl">📋</div>
+            <h2 className="text-2xl font-bold font-serif-heading text-[#181F1A]">Sign In to View Applications</h2>
+            <p className="text-sm text-[#58625B] max-w-sm">Create a profile or sign in to track your adoption applications.</p>
+            <button
+              onClick={() => handleOpenAuth('login')}
+              className="px-6 py-2.5 bg-[#183B2B] hover:bg-[#24533E] text-white text-sm font-semibold rounded-xl transition shadow-xs"
+            >
+              Sign In / Register
+            </button>
+          </div>
+        )}
+
+        {currentTab === 'visits' && currentUser && (
           <GroupVisitsView
             visits={visits}
             currentUser={currentUser}
@@ -187,7 +263,21 @@ export function App() {
           />
         )}
 
-        {currentTab === 'shelter' && (
+        {currentTab === 'visits' && !currentUser && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 text-center px-4">
+            <div className="text-5xl">📅</div>
+            <h2 className="text-2xl font-bold font-serif-heading text-[#181F1A]">Sign In to Book Shelter Visits</h2>
+            <p className="text-sm text-[#58625B] max-w-sm">Register a free profile to book group shelter visits and meet dogs in person.</p>
+            <button
+              onClick={() => handleOpenAuth('register')}
+              className="px-6 py-2.5 bg-[#183B2B] hover:bg-[#24533E] text-white text-sm font-semibold rounded-xl transition shadow-xs"
+            >
+              Create Free Profile
+            </button>
+          </div>
+        )}
+
+        {currentTab === 'shelter' && currentUser && (
           <ShelterManagementDashboard
             currentUser={currentUser}
             dogs={dogs}
@@ -195,9 +285,23 @@ export function App() {
             applications={applications}
             visits={visits}
             onRefreshData={refreshAllData}
-            onSwitchUser={handleSwitchUser}
-            availableUsers={availableUsers}
+            onSwitchUser={(user) => refreshUserData(user)}
+            availableUsers={dataStore.getAllDemoUsers()}
           />
+        )}
+
+        {currentTab === 'shelter' && !currentUser && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 text-center px-4">
+            <div className="text-5xl">🏠</div>
+            <h2 className="text-2xl font-bold font-serif-heading text-[#181F1A]">Shelter Portal — Sign In Required</h2>
+            <p className="text-sm text-[#58625B] max-w-sm">Sign in with a shelter staff account to access the management dashboard.</p>
+            <button
+              onClick={() => handleOpenAuth('login')}
+              className="px-6 py-2.5 bg-[#183B2B] hover:bg-[#24533E] text-white text-sm font-semibold rounded-xl transition shadow-xs"
+            >
+              Sign In
+            </button>
+          </div>
         )}
       </main>
 
@@ -212,6 +316,10 @@ export function App() {
           isSaved={savedDogIds.includes(selectedDogForModal.id)}
           onToggleSave={handleToggleSaveDog}
           onApply={(dog) => {
+            if (!currentUser) {
+              handleOpenAuth('login');
+              return;
+            }
             setSelectedDogForApplication(dog);
           }}
           onNavigateToMatching={() => setCurrentTab('matching')}
@@ -220,7 +328,7 @@ export function App() {
       )}
 
       {/* Adoption Application Submission Modal */}
-      {selectedDogForApplication && (
+      {selectedDogForApplication && currentUser && (
         <AdoptionApplicationModal
           dog={selectedDogForApplication}
           isOpen={Boolean(selectedDogForApplication)}
@@ -237,6 +345,17 @@ export function App() {
         savedDogs={savedDogsList}
         onSelectDog={(dog) => setSelectedDogForModal(dog)}
         onRemoveSavedDog={handleToggleSaveDog}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authModalMode}
+        availableUsers={dataStore.getAllDemoUsers()}
+        shelters={shelters}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
       />
 
       {/* Editorial Footer */}
