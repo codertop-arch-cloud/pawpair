@@ -24,12 +24,18 @@ import uploadRoutes from './routes/uploadRoutes.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load .env from server directory (works in local dev; on Vercel env vars are set in dashboard)
 dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+const isServerless = process.env.VERCEL === '1';
 
 const app = express();
 const server = http.createServer(app);
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+
+// Build a dynamic allowed origins list.
+// On Vercel, set CLIENT_URL to your Vercel URL (e.g. https://pawpair.vercel.app)
 const allowedOrigins = [
   CLIENT_URL,
   'http://localhost:5173',
@@ -37,36 +43,36 @@ const allowedOrigins = [
   'http://localhost:3000',
 ];
 
-// Socket.IO Setup
+const originFn = (origin, callback) => {
+  if (!origin || allowedOrigins.some((o) => origin.startsWith(o.replace(/\/$/, '')))) {
+    callback(null, true);
+  } else {
+    callback(null, true); // permissive — tighten for production if needed
+  }
+};
+
+// Socket.IO — falls back to long-polling on Vercel (WebSocket upgrade unavailable in serverless)
 const io = new Server(server, {
-  cors: {
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(null, true); // Allow during dev
-      }
-    },
-    credentials: true,
-  },
+  cors: { origin: originFn, credentials: true },
+  transports: ['polling', 'websocket'],
 });
 
 initSocket(io);
 
-// Core Middlewares
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(null, true); // Allow dev origins
-      }
-    },
-    credentials: true,
-  })
-);
+// On Vercel serverless, lazily ensure MongoDB is connected before each request
+if (isServerless) {
+  app.use(async (req, res, next) => {
+    try {
+      await connectDB();
+    } catch (err) {
+      console.error('DB connection error:', err.message);
+    }
+    next();
+  });
+}
 
+// Core Middlewares
+app.use(cors({ origin: originFn, credentials: true }));
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -97,14 +103,19 @@ app.use('/api/upload', uploadRoutes);
 // Centralized error handling
 app.use(errorHandler);
 
+// -----------------------------------------------------------------------
+// Server startup — only runs in local dev / traditional Node hosts.
+// On Vercel (isServerless), the platform invokes the exported app handler.
+// -----------------------------------------------------------------------
 const PORT = process.env.PORT || 5001;
 
-// Connect to MongoDB and start server
-if (process.env.NODE_ENV !== 'test') {
+if (!isServerless && process.env.NODE_ENV !== 'test') {
   connectDB()
     .then(() => {
       server.listen(PORT, () => {
-        console.log(`🚀 PawPair Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+        console.log(
+          `🚀 PawPair Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`
+        );
       });
     })
     .catch((err) => {
