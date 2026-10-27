@@ -1,0 +1,15 @@
+{
+  "watch": ["."],
+  "ignore": [
+    "node_modules",
+    "tests",
+    "*.test.js",
+    "*.spec.js"
+  ],
+  "delay": 1000,
+  "ext": "js,json",
+  "exec": "node index.js",
+  "env": {
+    "NODE_ENV": "development"
+  }
+}

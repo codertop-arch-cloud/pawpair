@@ -9,8 +9,13 @@ import {
   VisitParticipant,
 } from '../types';
 
+// In production VITE_API_BASE is set to https://pawpair-wgz8.onrender.com/api via Vercel env vars.
+// In local development it is not set, so we fall back to '/api' and let the Vite dev proxy
+// (vite.config.ts → server.proxy) forward requests to http://localhost:5001.
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
