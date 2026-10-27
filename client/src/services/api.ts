@@ -14,6 +14,8 @@ import {
 // (vite.config.ts → server.proxy) forward requests to http://localhost:5001.
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
+const TOKEN_KEY = 'pawpair_auth_token';
+
 const api = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
@@ -22,10 +24,30 @@ const api = axios.create({
   },
 });
 
-// Intercept responses for clear error messages
+// Attach Bearer token from localStorage if present (ensures cross-origin auth works even when third-party cookies are blocked)
+api.interceptors.request.use((config) => {
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // Ignore localStorage errors in restricted environments
+  }
+  return config;
+});
+
+// Intercept responses for clear error messages and clean up on 401
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response?.status === 401) {
+      try {
+        localStorage.removeItem(TOKEN_KEY);
+      } catch {
+        // Ignore
+      }
+    }
     const message =
       error.response?.data?.message || error.message || 'An unexpected error occurred';
     return Promise.reject(new Error(message));
@@ -39,17 +61,32 @@ export const authService = {
       const res = await api.get<{ success: boolean; user: UserProfile }>('/auth/me');
       return res.data.user;
     } catch {
+      try {
+        localStorage.removeItem(TOKEN_KEY);
+      } catch {
+        // Ignore
+      }
       return null;
     }
   },
 
-  login: async (email: string, password?: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> => {
+  login: async (
+    email: string,
+    password?: string
+  ): Promise<{ success: boolean; user?: UserProfile; token?: string; error?: string }> => {
     try {
-      const res = await api.post<{ success: boolean; user: UserProfile }>('/auth/login', {
+      const res = await api.post<{ success: boolean; user: UserProfile; token?: string }>('/auth/login', {
         email,
         password,
       });
-      return { success: true, user: res.data.user };
+      if (res.data.token) {
+        try {
+          localStorage.setItem(TOKEN_KEY, res.data.token);
+        } catch {
+          // Ignore
+        }
+      }
+      return { success: true, user: res.data.user, token: res.data.token };
     } catch (err: any) {
       return { success: false, error: err.message };
     }
@@ -63,21 +100,45 @@ export const authService = {
     city?: string;
     phone?: string;
     shelterId?: string;
-  }): Promise<{ success: boolean; user?: UserProfile; error?: string }> => {
+  }): Promise<{ success: boolean; user?: UserProfile; token?: string; error?: string }> => {
     try {
-      const res = await api.post<{ success: boolean; user: UserProfile }>('/auth/register', params);
-      return { success: true, user: res.data.user };
+      const res = await api.post<{ success: boolean; user: UserProfile; token?: string }>('/auth/register', params);
+      if (res.data.token) {
+        try {
+          localStorage.setItem(TOKEN_KEY, res.data.token);
+        } catch {
+          // Ignore
+        }
+      }
+      return { success: true, user: res.data.user, token: res.data.token };
     } catch (err: any) {
       return { success: false, error: err.message };
     }
   },
 
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout');
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      try {
+        localStorage.removeItem(TOKEN_KEY);
+      } catch {
+        // Ignore
+      }
+    }
   },
 
   demoSwitch: async (userIdentifier: { userId?: string; email?: string }): Promise<UserProfile> => {
-    const res = await api.post<{ success: boolean; user: UserProfile }>('/auth/demo-switch', userIdentifier);
+    const res = await api.post<{ success: boolean; user: UserProfile; token?: string }>('/auth/demo-switch', userIdentifier);
+    if (res.data.token) {
+      try {
+        localStorage.setItem(TOKEN_KEY, res.data.token);
+      } catch {
+        // Ignore
+      }
+    }
     return res.data.user;
   },
 

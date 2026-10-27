@@ -24,6 +24,8 @@ interface NavbarProps {
   currentTab: string;
   setCurrentTab: (tab: string) => void;
   currentUser: UserProfile | null;
+  /** True while the initial /api/auth/me check is in-flight. Prevents auth button flicker. */
+  authLoading?: boolean;
   /** Full list of demo personas for the demo-tools panel */
   demoUsers: UserProfile[];
   savedDogsCount: number;
@@ -40,6 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentTab,
   setCurrentTab,
   currentUser,
+  authLoading = false,
   demoUsers,
   savedDogsCount,
   onOpenSavedDogs,
@@ -473,6 +476,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 )}
               </div>
+            ) : authLoading ? (
+              /* AUTH LOADING SKELETON: neutral placeholder while checking session */
+              <div className="flex items-center space-x-2">
+                <div className="h-8 w-18 rounded-xl bg-[#EAE4DC]/60 animate-pulse hidden sm:block" />
+                <div className="h-8 w-24 rounded-xl bg-[#EAE4DC]/60 animate-pulse" />
+              </div>
             ) : (
               /* LOGGED-OUT: Sign In + Register buttons */
               <div className="flex items-center space-x-2">
@@ -480,7 +489,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   id="btn-sign-in"
                   type="button"
                   onClick={() => onOpenAuth('login')}
-                  className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-[#183B2B] border border-[#D5CEBF] rounded-xl hover:bg-[#F2ECE4] transition"
+                  className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-[#183B2B] border border-[#D5CEBF] rounded-xl hover:bg-[#F2ECE4] transition cursor-pointer"
                 >
                   <LogIn className="w-3.5 h-3.5" />
                   <span>Sign In</span>
@@ -489,7 +498,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   id="btn-register"
                   type="button"
                   onClick={() => onOpenAuth('register')}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#183B2B] hover:bg-[#24533E] rounded-xl transition shadow-xs"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#183B2B] hover:bg-[#24533E] rounded-xl transition shadow-xs cursor-pointer"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Create Profile</span>
@@ -551,6 +560,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <LogOut className="w-4 h-4" />
                 <span>Sign Out ({currentUser.fullName.split(' ')[0]})</span>
               </button>
+            ) : authLoading ? (
+              <div className="h-9 rounded-xl bg-[#EAE4DC]/60 animate-pulse my-1" />
             ) : (
               <>
                 <button
@@ -558,7 +569,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setMobileMenuOpen(false);
                     onOpenAuth('login');
                   }}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-[#181F1A] hover:bg-[#FAF7F2] transition"
+                  className="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-[#181F1A] hover:bg-[#FAF7F2] transition cursor-pointer"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>Sign In</span>
@@ -568,7 +579,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setMobileMenuOpen(false);
                     onOpenAuth('register');
                   }}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#183B2B] hover:bg-[#24533E] transition"
+                  className="w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#183B2B] hover:bg-[#24533E] transition cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>Create Free Profile</span>

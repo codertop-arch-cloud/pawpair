@@ -58,6 +58,26 @@ describe('PawPair Backend API Suite', () => {
     expect(meRes.body.user.email).toBe('maya.lin@example.com');
   });
 
+  it('GET /api/auth/me without token returns 401 unauthorized', async () => {
+    const res = await request(app).get('/api/auth/me');
+    expect(res.status).toBe(401);
+    expect(res.body.message).toContain('Authentication required');
+  });
+
+  it('GET /api/auth/me with Bearer token header authenticates correctly', async () => {
+    const loginRes = await request(app)
+      .post('/api/auth/demo-switch')
+      .send({ email: 'maya.lin@example.com' });
+    expect(loginRes.status).toBe(200);
+    expect(loginRes.body.token).toBeDefined();
+
+    const meRes = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${loginRes.body.token}`);
+    expect(meRes.status).toBe(200);
+    expect(meRes.body.user.email).toBe('maya.lin@example.com');
+  });
+
   it('POST /api/auth/logout should clear session', async () => {
     const res = await request(app).post('/api/auth/logout');
     expect(res.status).toBe(200);

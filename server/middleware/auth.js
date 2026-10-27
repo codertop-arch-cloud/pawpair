@@ -30,6 +30,7 @@ export const sendTokenCookie = (user, res, statusCode = 200) => {
 
   return res.status(statusCode).json({
     success: true,
+    token,
     user: userObj,
   });
 };

@@ -67,7 +67,39 @@ export function App() {
   const [isSavedDrawerOpen, setIsSavedDrawerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  // authLoading: true while the initial /api/auth/me check is in-flight.
+  // A 401 from /api/auth/me is EXPECTED for logged-out users — it simply means
+  // no valid session cookie was sent. This is NOT an error; set currentUser=null.
+  const [authLoading, setAuthLoading] = useState(true);
+  // dataLoading: true while dogs/shelters/visits are being fetched for the first time.
   const [loading, setLoading] = useState(true);
+
+  // Preserve intended destination when unauthenticated user attempts protected routes
+  const [intendedDestination, setIntendedDestination] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem('pawpair_intended_destination');
+    } catch {
+      return null;
+    }
+  });
+
+  const saveIntendedDestination = useCallback((dest: string) => {
+    setIntendedDestination(dest);
+    try {
+      sessionStorage.setItem('pawpair_intended_destination', dest);
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  const clearIntendedDestination = useCallback(() => {
+    setIntendedDestination(null);
+    try {
+      sessionStorage.removeItem('pawpair_intended_destination');
+    } catch {
+      // Ignore
+    }
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -100,7 +132,27 @@ export function App() {
     }
   }, []);
 
-  // Fetch all core domain data from MongoDB backend (with auto-retry for server cold-start race)
+  // ── Auth initialization ─────────────────────────────────────────────────────
+  // Called once on mount, independently of public data loading.
+  // /api/auth/me returns 401 when no session exists — that is normal and expected.
+  // We must NOT conflate this with a data-loading error or leave loading=true.
+  const initAuth = useCallback(async () => {
+    try {
+      const user = await authService.getMe();
+      // getMe() already catches all errors and returns null on 401/any failure.
+      // If we somehow reach here with a non-null user, refresh user-specific data.
+      await refreshUserData(user);
+    } catch {
+      // Safety net: any unexpected throw → treat as logged-out, never crash.
+      await refreshUserData(null);
+    } finally {
+      setAuthLoading(false);
+    }
+  }, [refreshUserData]);
+
+  // ── Public data loading ──────────────────────────────────────────────────────
+  // Fetch dogs/shelters/visits with auto-retry for server cold-start.
+  // This does NOT touch auth state — auth is initialized separately via initAuth.
   const refreshAllData = useCallback(async (attempt = 1) => {
     const MAX_ATTEMPTS = 3;
     const RETRY_DELAY_MS = 2000;
@@ -118,30 +170,34 @@ export function App() {
       setVisits(fetchedVisits);
       if (fetchedDemos.length > 0) setDemoUsers(fetchedDemos);
 
-      // Refresh logged-in user specific data
-      const user = await authService.getMe();
-      await refreshUserData(user);
+      // Also refresh auth-gated user data (saved dogs, applications, preferences)
+      // only when a user is already signed in (avoids unnecessary 401s).
+      setCurrentUser((prev) => {
+        if (prev) {
+          // Fire and forget — errors handled inside refreshUserData
+          refreshUserData(prev).catch(console.error);
+        }
+        return prev;
+      });
 
-      // Success — stop loading
       setLoading(false);
     } catch (err: any) {
       console.error(`Error fetching data (attempt ${attempt}/${MAX_ATTEMPTS}):`, err);
       if (attempt < MAX_ATTEMPTS) {
-        // Retry after short delay to handle server cold-start / DB not ready yet.
-        // Keep the loading spinner visible during retries.
         setTimeout(() => refreshAllData(attempt + 1), RETRY_DELAY_MS);
       } else {
-        // Final attempt failed — surface the error
         setApiError(err.message || 'Unable to connect to PawPair database backend.');
         setLoading(false);
       }
     }
   }, [refreshUserData]);
 
-  // Initial load on mount
+  // Initial load on mount — auth and data are initialized in parallel.
+  // Auth must NOT wait for data, and data loading must NOT block auth state.
   useEffect(() => {
+    initAuth();
     refreshAllData();
-  }, [refreshAllData]);
+  }, [initAuth, refreshAllData]);
 
 
   // URL dog detail modal handling (e.g. /dogs/:id)
@@ -152,6 +208,42 @@ export function App() {
       if (dog) setSelectedDogForModal(dog);
     }
   }, [location.pathname, dogs]);
+
+  // ── Protected Route Guard & Redirect ─────────────────────────────────────────
+  // Public routes: /discover, /, /matching, /dogs/:id
+  // Protected routes: /applications, /visits, /shelter
+  // Requirement: Do not automatically redirect users away from public pages.
+  // Redirect unauthenticated users only when they attempt to access protected routes,
+  // and preserve intended destinations so users can return after logging in.
+  useEffect(() => {
+    if (authLoading) return; // Wait until initial session check resolves
+
+    const protectedTabs = ['applications', 'visits', 'shelter'];
+    if (protectedTabs.includes(currentTab) && !currentUser) {
+      const destination = location.pathname + location.search;
+      saveIntendedDestination(destination);
+      navigate('/discover', { replace: true });
+      setAuthModalMode('login');
+      setAuthModalOpen(true);
+      showToast('Please sign in to access that page.');
+    }
+  }, [authLoading, currentUser, currentTab, location.pathname, location.search, navigate, saveIntendedDestination]);
+
+  // Redirect back to intended destination after successful sign-in
+  const redirectAfterAuth = useCallback(() => {
+    let dest = intendedDestination;
+    if (!dest) {
+      try {
+        dest = sessionStorage.getItem('pawpair_intended_destination');
+      } catch {
+        dest = null;
+      }
+    }
+    if (dest) {
+      clearIntendedDestination();
+      navigate(dest);
+    }
+  }, [intendedDestination, clearIntendedDestination, navigate]);
 
   // Real-time Socket.IO subscriptions
   useEffect(() => {
@@ -214,7 +306,9 @@ export function App() {
     const result = await authService.login(email, password);
     if (result.success && result.user) {
       await refreshUserData(result.user);
+      setAuthLoading(false); // ensure authLoading is resolved after explicit login
       showToast(`Welcome back, ${result.user.fullName.split(' ')[0]}! 👋`);
+      redirectAfterAuth();
       return { success: true };
     }
     return { success: false, error: result.error || 'Login failed' };
@@ -232,7 +326,9 @@ export function App() {
     const result = await authService.register(params);
     if (result.success && result.user) {
       await refreshUserData(result.user);
+      setAuthLoading(false);
       showToast(`Welcome to PawPair, ${result.user.fullName.split(' ')[0]}! 🐾`);
+      redirectAfterAuth();
       return { success: true };
     }
     return { success: false, error: result.error || 'Registration failed' };
@@ -241,6 +337,7 @@ export function App() {
   const handleLogout = async () => {
     await authService.logout();
     await refreshUserData(null);
+    clearIntendedDestination();
     setCurrentTab('discover');
     showToast('You have been signed out.');
   };
@@ -274,7 +371,9 @@ export function App() {
     try {
       const updatedUser = await authService.demoSwitch({ userId: user.id });
       await refreshUserData(updatedUser);
+      setAuthLoading(false);
       showToast(`Switched to ${updatedUser.fullName} (${updatedUser.role === 'shelter_staff' ? 'Staff' : 'Adopter'})`);
+      redirectAfterAuth();
     } catch (err: any) {
       showToast(err.message || 'Failed to switch demo persona');
     }
@@ -368,6 +467,7 @@ export function App() {
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         currentUser={currentUser}
+        authLoading={authLoading}
         demoUsers={demoUsers}
         savedDogsCount={savedDogIds.length}
         onOpenSavedDogs={() => setIsSavedDrawerOpen(true)}
@@ -380,10 +480,10 @@ export function App() {
 
       {/* Main App Content Viewport */}
       <main className="flex-1">
-        {loading ? (
+        {loading && !apiError ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-3">
             <div className="animate-spin text-3xl">🐾</div>
-            <p className="text-xs text-[#58625B] font-medium">Connecting to PawPair MongoDB Atlas...</p>
+            <p className="text-xs text-[#58625B] font-medium">Connecting to PawPair...</p>
           </div>
         ) : (
           <>
