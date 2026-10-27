@@ -9,7 +9,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { Dog, UserProfile, AdoptionApplication } from '../../types';
-import { dataStore } from '../../services/dataService';
+import { applicationService } from '../../services/api';
 
 interface AdoptionApplicationModalProps {
   dog: Dog | null;
@@ -51,7 +51,7 @@ export const AdoptionApplicationModal: React.FC<AdoptionApplicationModalProps> =
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -91,7 +91,7 @@ export const AdoptionApplicationModal: React.FC<AdoptionApplicationModalProps> =
 
     try {
       setIsSubmitting(true);
-      const newApp = dataStore.submitApplication({
+      const newApp = await applicationService.submitApplication({
         dogId: dog.id,
         adopterId: currentUser.id,
         applicantName,

@@ -14,7 +14,7 @@ import {
   Home,
 } from 'lucide-react';
 import { AdoptionApplication, UserProfile, ApplicationStatus } from '../../types';
-import { dataStore } from '../../services/dataService';
+import { applicationService } from '../../services/api';
 
 interface MyApplicationsViewProps {
   applications: AdoptionApplication[];
@@ -40,15 +40,18 @@ export const MyApplicationsView: React.FC<MyApplicationsViewProps> = ({
   const selectedApp =
     userApplications.find((a) => a.id === selectedAppId) || userApplications[0];
 
-  const handleWithdraw = (appId: string) => {
+  const handleWithdraw = async (appId: string) => {
     if (window.confirm('Are you sure you wish to withdraw this adoption application?')) {
-      dataStore.updateApplicationStatus(
-        appId,
-        'withdrawn',
-        'Application voluntarily withdrawn by adopter.',
-        currentUser.fullName
-      );
-      onRefreshApplications();
+      try {
+        await applicationService.updateStatus(
+          appId,
+          'withdrawn',
+          'Application voluntarily withdrawn by adopter.'
+        );
+        onRefreshApplications();
+      } catch (err: any) {
+        alert(err.message || 'Failed to withdraw application');
+      }
     }
   };
 

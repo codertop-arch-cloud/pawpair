@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { ShelterVisit, UserProfile } from '../../types';
-import { dataStore } from '../../services/dataService';
+import { visitService } from '../../services/api';
 
 interface GroupVisitsViewProps {
   visits: ShelterVisit[];
@@ -29,29 +29,42 @@ export const GroupVisitsView: React.FC<GroupVisitsViewProps> = ({
   const [reservationNotes, setReservationNotes] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [registeredVisitIds, setRegisteredVisitIds] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    visitService.getMyRegistrations().then((ids) => {
+      if (isMounted) setRegisteredVisitIds(ids);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser.id, visits]);
 
   const activeVisits = visits.filter((v) => v.status === 'upcoming');
 
-  const handleJoinVisit = (visitId: string) => {
+  const handleJoinVisit = async (visitId: string) => {
     setErrorMessage(null);
     try {
-      dataStore.joinVisit(visitId, currentUser, reservationNotes);
+      await visitService.joinVisit(visitId, reservationNotes);
       setSelectedVisitId(null);
       setReservationNotes('');
       setSuccessToast('Spot confirmed! You are registered for the shelter visit.');
       setTimeout(() => setSuccessToast(null), 3500);
+      setRegisteredVisitIds((prev) => [...prev, visitId]);
       onRefreshVisits();
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to reserve spot.');
     }
   };
 
-  const handleLeaveVisit = (visitId: string) => {
+  const handleLeaveVisit = async (visitId: string) => {
     if (window.confirm('Are you sure you wish to cancel your shelter visit reservation?')) {
       try {
-        dataStore.leaveVisit(visitId, currentUser.id);
+        await visitService.leaveVisit(visitId);
         setSuccessToast('Reservation cancelled. Capacity has been freed.');
         setTimeout(() => setSuccessToast(null), 3500);
+        setRegisteredVisitIds((prev) => prev.filter((id) => id !== visitId));
         onRefreshVisits();
       } catch (err: any) {
         alert(err.message || 'Failed to cancel reservation.');
@@ -96,7 +109,7 @@ export const GroupVisitsView: React.FC<GroupVisitsViewProps> = ({
       {/* Visits List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {visits.map((visit) => {
-          const isUserRegistered = dataStore.isUserRegisteredForVisit(visit.id, currentUser.id);
+          const isUserRegistered = registeredVisitIds.includes(visit.id);
           const isCancelled = visit.status === 'cancelled';
           const isFull = visit.participantCount >= visit.capacity;
           const spotsRemaining = Math.max(0, visit.capacity - visit.participantCount);

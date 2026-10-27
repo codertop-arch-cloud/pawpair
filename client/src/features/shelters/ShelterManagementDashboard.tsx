@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Building2,
   PlusCircle,
@@ -20,10 +20,11 @@ import {
   UserProfile,
   AdoptionApplication,
   ShelterVisit,
+  VisitParticipant,
   ApplicationStatus,
   DogStatus,
 } from '../../types';
-import { dataStore } from '../../services/dataService';
+import { dogService, applicationService, visitService, uploadService } from '../../services/api';
 
 interface ShelterManagementDashboardProps {
   currentUser: UserProfile;
@@ -88,6 +89,21 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
   const shelterDogs = dogs.filter((d) => d.shelterId === currentShelterId);
   const shelterApplications = applications.filter((a) => a.shelterId === currentShelterId);
   const shelterVisits = visits.filter((v) => v.shelterId === currentShelterId);
+  const [visitParticipantsMap, setVisitParticipantsMap] = useState<Record<string, VisitParticipant[]>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    shelterVisits.forEach((v) => {
+      visitService.getParticipants(v.id).then((pts) => {
+        if (isMounted) {
+          setVisitParticipantsMap((prev) => ({ ...prev, [v.id]: pts }));
+        }
+      }).catch(() => {});
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [shelterVisits]);
 
   // Metrics
   const activeListingsCount = shelterDogs.filter((d) => d.status === 'available').length;
@@ -96,7 +112,23 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
   ).length;
   const approvedAppsCount = shelterApplications.filter((a) => a.status === 'approved').length;
 
-  const handleCreateDog = (e: React.FormEvent) => {
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  const handlePhotoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingPhoto(true);
+      const url = await uploadService.uploadImage(file);
+      setNewDogPhoto(url);
+    } catch (err: any) {
+      alert(err.message || 'Failed to upload photo to Cloudinary');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleCreateDog = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDogName.trim() || !newDogBreed.trim() || !newDogBackstory.trim()) {
       alert('Please fill out all required fields.');
@@ -109,73 +141,84 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
     else if (newDogAge < 8) ageGroup = 'adult';
     else ageGroup = 'senior';
 
-    dataStore.createDog({
-      name: newDogName,
-      breed: newDogBreed,
-      ageYears: newDogAge,
-      ageGroup,
-      size: newDogSize,
-      gender: newDogGender,
-      energyLevel: newDogEnergy,
-      temperament: ['Gentle', 'Loyal', 'Friendly'],
-      location: `${shelter.city}, ${shelter.state}`,
-      shelterId: shelter.id,
-      shelterName: shelter.name,
-      photos: [newDogPhoto],
-      videoUrl: newDogVideo || undefined,
-      backstory: newDogBackstory,
-      specialNeeds: [],
-      medicalInfo: {
-        vaccinated: true,
-        neutered: true,
-        microchipped: true,
-      },
-      goodWith: {
-        children: newDogKids,
-        cats: newDogCats,
-        otherDogs: newDogDogs,
-      },
-      spaceRequired: newDogSpace,
-      minDailyExerciseHours: newDogExercise,
-      experienceLevelNeeded: newDogExp,
-      adoptionFee: newDogFee,
-      status: 'available',
-    });
+    try {
+      await dogService.createDog({
+        name: newDogName,
+        breed: newDogBreed,
+        ageYears: newDogAge,
+        ageGroup,
+        size: newDogSize,
+        gender: newDogGender,
+        energyLevel: newDogEnergy,
+        temperament: ['Gentle', 'Loyal', 'Friendly'],
+        location: `${shelter.city}, ${shelter.state}`,
+        shelterId: shelter.id,
+        shelterName: shelter.name,
+        photos: [newDogPhoto],
+        videoUrl: newDogVideo || undefined,
+        backstory: newDogBackstory,
+        specialNeeds: [],
+        medicalInfo: {
+          vaccinated: true,
+          neutered: true,
+          microchipped: true,
+        },
+        goodWith: {
+          children: newDogKids,
+          cats: newDogCats,
+          otherDogs: newDogDogs,
+        },
+        spaceRequired: newDogSpace,
+        minDailyExerciseHours: newDogExercise,
+        experienceLevelNeeded: newDogExp,
+        adoptionFee: newDogFee,
+        status: 'available',
+      });
 
-    setShowAddDogModal(false);
-    onRefreshData();
-    setNewDogName('');
-    setNewDogBreed('');
-    setNewDogBackstory('');
+      setShowAddDogModal(false);
+      onRefreshData();
+      setNewDogName('');
+      setNewDogBreed('');
+      setNewDogBackstory('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to create dog listing');
+    }
   };
 
-  const handleUpdateDogStatus = (dogId: string, status: DogStatus) => {
-    dataStore.updateDog(dogId, { status });
-    onRefreshData();
+  const handleUpdateDogStatus = async (dogId: string, status: DogStatus) => {
+    try {
+      await dogService.updateDog(dogId, { status });
+      onRefreshData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update dog status');
+    }
   };
 
-  const handleApplicationStatusSubmit = (e: React.FormEvent) => {
+  const handleApplicationStatusSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!statusUpdateAppId) return;
 
-    dataStore.updateApplicationStatus(
-      statusUpdateAppId,
-      targetStatus,
-      statusNote,
-      currentUser.fullName
-    );
+    try {
+      await applicationService.updateStatus(
+        statusUpdateAppId,
+        targetStatus,
+        statusNote
+      );
 
-    setStatusUpdateAppId(null);
-    setStatusNote('');
-    onRefreshData();
+      setStatusUpdateAppId(null);
+      setStatusNote('');
+      onRefreshData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update application status');
+    }
   };
 
-  const handleCreateVisit = (e: React.FormEvent) => {
+  const handleCreateVisit = async (e: React.FormEvent) => {
     e.preventDefault();
     setVisitError(null);
 
     try {
-      dataStore.createVisit({
+      await visitService.createVisit({
         shelterId: shelter.id,
         title: visitTitle,
         description: visitDescription,
@@ -471,7 +514,7 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {shelterVisits.map((visit) => {
-              const participants = dataStore.getVisitParticipants(visit.id, currentUser);
+              const participants = visitParticipantsMap[visit.id] || [];
 
               return (
                 <div
@@ -604,14 +647,37 @@ export const ShelterManagementDashboard: React.FC<ShelterManagementDashboardProp
               </div>
 
               <div>
-                <label className="font-semibold text-[#181F1A] block mb-1">Photo URL *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-semibold text-[#181F1A] block">Photo URL or Upload *</label>
+                  <label className="cursor-pointer text-[11px] font-semibold text-[#183B2B] bg-[#EDF4F0] px-2.5 py-1 rounded-lg border border-[#D8F3DC] hover:bg-[#d5e8dc] transition">
+                    {isUploadingPhoto ? 'Uploading to Cloudinary...' : '📁 Upload to Cloudinary'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploadingPhoto}
+                      onChange={handlePhotoFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
                 <input
                   type="url"
                   required
                   value={newDogPhoto}
                   onChange={(e) => setNewDogPhoto(e.target.value)}
                   className="w-full bg-white border border-[#EAE4DC] rounded-xl p-2.5 text-xs text-[#181F1A]"
+                  placeholder="Paste image URL or upload image file..."
                 />
+                {newDogPhoto && (
+                  <div className="mt-2 flex items-center space-x-2">
+                    <img
+                      src={newDogPhoto}
+                      alt="Preview"
+                      className="w-12 h-12 object-cover rounded-xl border border-[#EAE4DC]"
+                    />
+                    <span className="text-[11px] text-[#58625B]">Photo preview</span>
+                  </div>
+                )}
               </div>
 
               <div>

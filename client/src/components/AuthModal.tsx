@@ -22,7 +22,7 @@ interface AuthModalProps {
   initialMode?: 'login' | 'register';
   availableUsers: UserProfile[];
   shelters: Shelter[];
-  onLogin: (email: string, password?: string) => { success: boolean; error?: string };
+  onLogin: (email: string, password?: string) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
   onRegister: (params: {
     fullName: string;
     email: string;
@@ -31,7 +31,7 @@ interface AuthModalProps {
     city?: string;
     phone?: string;
     shelterId?: string;
-  }) => { success: boolean; error?: string };
+  }) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -79,14 +79,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     if (!loginEmail.trim()) {
       setErrorMessage('Please enter your email address.');
       return;
     }
-    const result = onLogin(loginEmail, loginPassword);
+    const result = await onLogin(loginEmail, loginPassword);
     if (result.success) {
       onClose();
     } else {
@@ -94,7 +94,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     if (!regFullName.trim()) {
@@ -106,7 +106,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    const result = onRegister({
+    const result = await onRegister({
       fullName: regFullName,
       email: regEmail,
       password: regPassword || undefined,
@@ -123,8 +123,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleQuickLogin = (user: UserProfile) => {
-    const result = onLogin(user.email, user.password);
+  const handleQuickLogin = async (user: UserProfile) => {
+    const result = await onLogin(user.email, user.password);
     if (result.success) {
       onClose();
     } else {
