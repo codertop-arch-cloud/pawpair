@@ -100,8 +100,10 @@ export function App() {
     }
   }, []);
 
-  // Fetch all core domain data from MongoDB backend
-  const refreshAllData = useCallback(async () => {
+  // Fetch all core domain data from MongoDB backend (with auto-retry for server cold-start race)
+  const refreshAllData = useCallback(async (attempt = 1) => {
+    const MAX_ATTEMPTS = 3;
+    const RETRY_DELAY_MS = 2000;
     try {
       setApiError(null);
       const [fetchedDogs, fetchedShelters, fetchedVisits, fetchedDemos] = await Promise.all([
@@ -119,11 +121,20 @@ export function App() {
       // Refresh logged-in user specific data
       const user = await authService.getMe();
       await refreshUserData(user);
-    } catch (err: any) {
-      console.error('Error fetching data from MongoDB backend:', err);
-      setApiError(err.message || 'Unable to connect to PawPair database backend.');
-    } finally {
+
+      // Success — stop loading
       setLoading(false);
+    } catch (err: any) {
+      console.error(`Error fetching data (attempt ${attempt}/${MAX_ATTEMPTS}):`, err);
+      if (attempt < MAX_ATTEMPTS) {
+        // Retry after short delay to handle server cold-start / DB not ready yet.
+        // Keep the loading spinner visible during retries.
+        setTimeout(() => refreshAllData(attempt + 1), RETRY_DELAY_MS);
+      } else {
+        // Final attempt failed — surface the error
+        setApiError(err.message || 'Unable to connect to PawPair database backend.');
+        setLoading(false);
+      }
     }
   }, [refreshUserData]);
 
@@ -131,6 +142,7 @@ export function App() {
   useEffect(() => {
     refreshAllData();
   }, [refreshAllData]);
+
 
   // URL dog detail modal handling (e.g. /dogs/:id)
   useEffect(() => {
@@ -386,8 +398,10 @@ export function App() {
                   navigate(`/dogs/${dog.id}`);
                 }}
                 onNavigateToMatching={() => setCurrentTab('matching')}
+                onRefreshDogs={() => refreshAllData()}
               />
             )}
+
 
             {currentTab === 'matching' && (
               <LifestyleMatcher

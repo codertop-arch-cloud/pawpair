@@ -22,7 +22,10 @@ export const connectDB = async () => {
 
   const connect = async (connectionUri) => {
     return mongoose.connect(connectionUri, {
-      serverSelectionTimeoutMS: 8000,
+      serverSelectionTimeoutMS: 15000,
+      // Disable Mongoose query buffering — if DB isn't ready, fail fast with a
+      // clear error rather than silently buffering and timing out after 10 s.
+      bufferCommands: false,
     });
   };
 

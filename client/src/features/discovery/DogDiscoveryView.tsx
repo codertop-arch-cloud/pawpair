@@ -25,6 +25,7 @@ interface DogDiscoveryViewProps {
   onToggleSaveDog: (dogId: string) => void;
   onOpenDogModal: (dog: Dog) => void;
   onNavigateToMatching: () => void;
+  onRefreshDogs?: () => void;
 }
 
 export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
@@ -34,6 +35,7 @@ export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
   onToggleSaveDog,
   onOpenDogModal,
   onNavigateToMatching,
+  onRefreshDogs,
 }) => {
   const [viewMode, setViewMode] = useState<'stack' | 'grid'>('stack');
   const [searchQuery, setSearchQuery] = useState('');
@@ -126,6 +128,10 @@ export const DogDiscoveryView: React.FC<DogDiscoveryViewProps> = ({
   const handleResetStack = () => {
     setActiveStackIndex(0);
     setSwipedHistory([]);
+    // If dogs are empty (e.g. initial connection failed), trigger a live refetch
+    if (dogs.length === 0 && onRefreshDogs) {
+      onRefreshDogs();
+    }
   };
 
   // Keyboard shortcuts for Discovery Deck (ArrowLeft: Pass, ArrowRight: Like, U/Z: Undo, Enter: Full Profile)
